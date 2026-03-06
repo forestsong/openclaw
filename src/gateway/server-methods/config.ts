@@ -47,6 +47,19 @@ import { parseRestartRequestParams } from "./restart-request.js";
 import type { GatewayRequestHandlers, RespondFn } from "./types.js";
 import { assertValidParams } from "./validation.js";
 
+function respondConfigWriteError(respond: RespondFn, error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  const code =
+    error && typeof error === "object" && "code" in error && typeof error.code === "string"
+      ? error.code
+      : undefined;
+  if (code === "OPERATOR_POLICY_LOCKED" || message.startsWith("Invalid operator policy at ")) {
+    respond(false, undefined, errorShape(ErrorCodes.INVALID_REQUEST, message));
+    return true;
+  }
+  return false;
+}
+
 function requireConfigBaseHash(
   params: unknown,
   snapshot: Awaited<ReturnType<typeof readConfigFileSnapshot>>,
@@ -270,7 +283,14 @@ export const configHandlers: GatewayRequestHandlers = {
     if (!parsed) {
       return;
     }
-    await writeConfigFile(parsed.config, writeOptions);
+    try {
+      await writeConfigFile(parsed.config, writeOptions);
+    } catch (error) {
+      if (respondConfigWriteError(respond, error)) {
+        return;
+      }
+      throw error;
+    }
     respond(
       true,
       {
@@ -360,7 +380,14 @@ export const configHandlers: GatewayRequestHandlers = {
     context?.logGateway?.info(
       `config.patch write ${formatControlPlaneActor(actor)} changedPaths=${summarizeChangedPaths(changedPaths)} restartReason=config.patch`,
     );
-    await writeConfigFile(validated.config, writeOptions);
+    try {
+      await writeConfigFile(validated.config, writeOptions);
+    } catch (error) {
+      if (respondConfigWriteError(respond, error)) {
+        return;
+      }
+      throw error;
+    }
 
     const { sessionKey, note, restartDelayMs, deliveryContext, threadId } =
       resolveConfigRestartRequest(params);
@@ -420,7 +447,14 @@ export const configHandlers: GatewayRequestHandlers = {
     context?.logGateway?.info(
       `config.apply write ${formatControlPlaneActor(actor)} changedPaths=${summarizeChangedPaths(changedPaths)} restartReason=config.apply`,
     );
-    await writeConfigFile(parsed.config, writeOptions);
+    try {
+      await writeConfigFile(parsed.config, writeOptions);
+    } catch (error) {
+      if (respondConfigWriteError(respond, error)) {
+        return;
+      }
+      throw error;
+    }
 
     const { sessionKey, note, restartDelayMs, deliveryContext, threadId } =
       resolveConfigRestartRequest(params);
