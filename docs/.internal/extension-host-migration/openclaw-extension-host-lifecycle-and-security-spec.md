@@ -37,52 +37,52 @@ What has been implemented:
 - registry activation now routes through `src/extension-host/activation.ts`
 - a host-owned resolved-extension registry exists for static consumers
 - static config-baseline generation now reads bundled extension metadata through the host-owned resolved-extension registry
-- channel, provider, HTTP-route, gateway-method, tool, CLI, service, command, context-engine, and hook registration normalization now delegates through `src/extension-host/runtime-registrations.ts`
-- low-risk runtime compatibility writes for channel, provider, gateway-method, HTTP-route, tool, CLI, service, command, context-engine, and hook registrations now delegate through `src/extension-host/registry-writes.ts`
-- legacy internal-hook bridging and typed prompt-injection compatibility policy now delegate through `src/extension-host/hook-compat.ts`
-- compatibility `OpenClawPluginApi` composition and logger shaping now delegate through `src/extension-host/plugin-api.ts`
-- compatibility plugin-registry facade ownership now delegates through `src/extension-host/plugin-registry.ts`
-- compatibility plugin-registry policy now delegates through `src/extension-host/plugin-registry-compat.ts`
-- compatibility plugin-registry registration actions now delegate through `src/extension-host/plugin-registry-registrations.ts`
-- host-owned runtime registry accessors now delegate through `src/extension-host/runtime-registry.ts`, and the channel, provider, tool, command, HTTP-route, gateway-method, CLI, and service slices now keep host-owned storage there with mirrored legacy compatibility views
-- plugin command registration, matching, execution, listing, native command-spec projection, and loader reload clearing now delegate through `src/extension-host/command-runtime.ts`
-- service startup, stop ordering, service-context creation, and failure logging now delegate through `src/extension-host/service-lifecycle.ts`
-- CLI duplicate detection, registrar invocation, and async failure logging now delegate through `src/extension-host/cli-lifecycle.ts`
-- gateway method-id aggregation, plugin diagnostic shaping, and extra-handler composition now delegate through `src/extension-host/gateway-methods.ts`
-- plugin tool resolution, conflict handling, optional-tool gating, and plugin-tool metadata tracking now delegate through `src/extension-host/tool-runtime.ts`
-- plugin provider projection from registry entries into runtime provider objects now delegates through `src/extension-host/provider-runtime.ts`
-- plugin provider discovery filtering, order grouping, and result normalization now delegate through `src/extension-host/provider-discovery.ts`
-- provider matching, auth-method selection, config-patch merging, and default-model application now delegate through `src/extension-host/provider-auth.ts`
-- provider onboarding option building, model-picker entry building, and provider-method choice resolution now delegate through `src/extension-host/provider-wizard.ts`
-- loaded-provider auth application, plugin-enable gating, auth-method execution, and post-auth default-model handling now delegate through `src/extension-host/provider-auth-flow.ts`
-- provider post-selection hook lookup and invocation now delegate through `src/extension-host/provider-model-selection.ts`
-- loader alias-wired module loader creation now routes through `src/extension-host/loader-module-loader.ts`
-- loader cache key construction and registry cache control now route through `src/extension-host/loader-cache.ts`
-- loader lazy runtime proxy creation now routes through `src/extension-host/loader-runtime-proxy.ts`
-- loader provenance helpers now route through `src/extension-host/loader-provenance.ts`
-- loader duplicate-order and record/error policy now route through `src/extension-host/loader-policy.ts`
-- loader discovery policy outcomes now route through `src/extension-host/loader-discovery-policy.ts`
-- loader initial candidate planning and record creation now route through `src/extension-host/loader-records.ts`
-- loader entry-path opening and module import now route through `src/extension-host/loader-import.ts`
-- loader module-export resolution, config validation, and memory-slot load decisions now route through `src/extension-host/loader-runtime.ts`
-- loader post-import planning and `register(...)` execution now route through `src/extension-host/loader-register.ts`
-- loader per-candidate orchestration now routes through `src/extension-host/loader-flow.ts`
-- loader top-level load orchestration now routes through `src/extension-host/loader-orchestrator.ts`
-- loader host process state now routes through `src/extension-host/loader-host-state.ts`
-- loader preflight and cache-hit setup now routes through `src/extension-host/loader-preflight.ts`
-- loader post-preflight pipeline composition now routes through `src/extension-host/loader-pipeline.ts`
-- loader execution setup composition now routes through `src/extension-host/loader-execution.ts`
-- loader discovery and manifest bootstrap now routes through `src/extension-host/loader-bootstrap.ts`
-- loader mutable activation state now routes through `src/extension-host/loader-session.ts`
-- loader session run and finalization composition now routes through `src/extension-host/loader-run.ts`
-- loader activation policy outcomes now route through `src/extension-host/loader-activation-policy.ts`
-- loader record-state transitions now route through `src/extension-host/loader-state.ts`, which now enforces an explicit loader lifecycle state machine while preserving compatibility `PluginRecord.status` values
-- loader finalization policy results now route through `src/extension-host/loader-finalization-policy.ts`
-- loader final cache, readiness promotion, and activation finalization now routes through `src/extension-host/loader-finalize.ts`
+- channel, provider, HTTP-route, gateway-method, tool, CLI, service, command, context-engine, and hook registration normalization now delegates through `src/extension-host/contributions/runtime-registrations.ts`
+- low-risk runtime compatibility writes for channel, provider, gateway-method, HTTP-route, tool, CLI, service, command, context-engine, and hook registrations now delegate through `src/extension-host/contributions/registry-writes.ts`
+- legacy internal-hook bridging and typed prompt-injection compatibility policy now delegate through `src/extension-host/compat/hook-compat.ts`
+- compatibility `OpenClawPluginApi` composition and logger shaping now delegate through `src/extension-host/compat/plugin-api.ts`
+- compatibility plugin-registry facade ownership now delegates through `src/extension-host/compat/plugin-registry.ts`
+- compatibility plugin-registry policy now delegates through `src/extension-host/compat/plugin-registry-compat.ts`
+- compatibility plugin-registry registration actions now delegate through `src/extension-host/compat/plugin-registry-registrations.ts`
+- host-owned runtime registry accessors now delegate through `src/extension-host/contributions/runtime-registry.ts`, and the channel, provider, tool, command, HTTP-route, gateway-method, CLI, and service slices now keep host-owned storage there with mirrored legacy compatibility views
+- plugin command registration, matching, execution, listing, native command-spec projection, and loader reload clearing now delegate through `src/extension-host/contributions/command-runtime.ts`
+- service startup, stop ordering, service-context creation, and failure logging now delegate through `src/extension-host/contributions/service-lifecycle.ts`
+- CLI duplicate detection, registrar invocation, and async failure logging now delegate through `src/extension-host/contributions/cli-lifecycle.ts`
+- gateway method-id aggregation, plugin diagnostic shaping, and extra-handler composition now delegate through `src/extension-host/contributions/gateway-methods.ts`
+- plugin tool resolution, conflict handling, optional-tool gating, and plugin-tool metadata tracking now delegate through `src/extension-host/contributions/tool-runtime.ts`
+- plugin provider projection from registry entries into runtime provider objects now delegates through `src/extension-host/contributions/provider-runtime.ts`
+- plugin provider discovery filtering, order grouping, and result normalization now delegate through `src/extension-host/contributions/provider-discovery.ts`
+- provider matching, auth-method selection, config-patch merging, and default-model application now delegate through `src/extension-host/contributions/provider-auth.ts`
+- provider onboarding option building, model-picker entry building, and provider-method choice resolution now delegate through `src/extension-host/contributions/provider-wizard.ts`
+- loaded-provider auth application, plugin-enable gating, auth-method execution, and post-auth default-model handling now delegate through `src/extension-host/contributions/provider-auth-flow.ts`
+- provider post-selection hook lookup and invocation now delegate through `src/extension-host/contributions/provider-model-selection.ts`
+- loader alias-wired module loader creation now routes through `src/extension-host/activation/loader-module-loader.ts`
+- loader cache key construction and registry cache control now route through `src/extension-host/activation/loader-cache.ts`
+- loader lazy runtime proxy creation now routes through `src/extension-host/activation/loader-runtime-proxy.ts`
+- loader provenance helpers now route through `src/extension-host/policy/loader-provenance.ts`
+- loader duplicate-order and record/error policy now route through `src/extension-host/policy/loader-policy.ts`
+- loader discovery policy outcomes now route through `src/extension-host/policy/loader-discovery-policy.ts`
+- loader initial candidate planning and record creation now route through `src/extension-host/activation/loader-records.ts`
+- loader entry-path opening and module import now route through `src/extension-host/activation/loader-import.ts`
+- loader module-export resolution, config validation, and memory-slot load decisions now route through `src/extension-host/activation/loader-runtime.ts`
+- loader post-import planning and `register(...)` execution now route through `src/extension-host/activation/loader-register.ts`
+- loader per-candidate orchestration now routes through `src/extension-host/activation/loader-flow.ts`
+- loader top-level load orchestration now routes through `src/extension-host/activation/loader-orchestrator.ts`
+- loader host process state now routes through `src/extension-host/activation/loader-host-state.ts`
+- loader preflight and cache-hit setup now routes through `src/extension-host/activation/loader-preflight.ts`
+- loader post-preflight pipeline composition now routes through `src/extension-host/activation/loader-pipeline.ts`
+- loader execution setup composition now routes through `src/extension-host/activation/loader-execution.ts`
+- loader discovery and manifest bootstrap now routes through `src/extension-host/activation/loader-bootstrap.ts`
+- loader mutable activation state now routes through `src/extension-host/activation/loader-session.ts`
+- loader session run and finalization composition now routes through `src/extension-host/activation/loader-run.ts`
+- loader activation policy outcomes now route through `src/extension-host/policy/loader-activation-policy.ts`
+- loader record-state transitions now route through `src/extension-host/activation/loader-state.ts`, which now enforces an explicit loader lifecycle state machine while preserving compatibility `PluginRecord.status` values
+- loader finalization policy results now route through `src/extension-host/policy/loader-finalization-policy.ts`
+- loader final cache, readiness promotion, and activation finalization now routes through `src/extension-host/activation/loader-finalize.ts`
 
 How it has been implemented:
 
-- by extracting `src/extension-host/active-registry.ts` and making `src/plugins/runtime.ts` delegate to it
+- by extracting `src/extension-host/static/active-registry.ts` and making `src/plugins/runtime.ts` delegate to it
 - by leaving lifecycle behavior unchanged for now and only moving ownership of the shared registry boundary
 - by moving low-risk readers first, such as channel lookup, dock lookup, message-channel lookup, and default HTTP route registry access
 - by extending that same host-owned boundary into static consumers instead of introducing separate one-off metadata loaders
@@ -111,7 +111,7 @@ How it has been implemented:
 - by adding explicit compatibility `lifecycleState` mapping on loader-owned plugin records before enforcing the loader lifecycle state machine
 - by promoting successfully registered plugins to `ready` during host-owned finalization while leaving broader activation-state semantics for later phases
 - by moving mutable activation state such as seen-id tracking, memory-slot selection, and finalization inputs into a host-owned loader session before broader activation-state semantics move
-- by extracting shared provenance path matching and install-rule evaluation into `src/extension-host/loader-provenance.ts` so activation and finalization policy seams reuse one host-owned implementation
+- by extracting shared provenance path matching and install-rule evaluation into `src/extension-host/policy/loader-provenance.ts` so activation and finalization policy seams reuse one host-owned implementation
 - by turning open-allowlist discovery warnings into explicit host-owned discovery-policy results before the orchestrator logs them
 - by moving duplicate precedence, config enablement, and early memory-slot gating into explicit host-owned activation-policy outcomes before broader policy semantics move
 - by turning provenance-based untracked-extension warnings and final memory-slot warnings into explicit host-owned finalization-policy results before the finalizer applies them
@@ -133,7 +133,7 @@ How it has been implemented:
 - by extracting provider-id normalization into `src/agents/provider-id.ts` so provider-only host seams do not inherit the heavier agent and browser dependency graph from `src/agents/model-selection.ts`
 - by extracting model-ref parsing into `src/agents/model-ref.ts` and Google model-id normalization into `src/agents/google-model-id.ts` so provider auth and setup seams can be tested without pulling the heavier provider-loader and browser dependency graph
 - by introducing host-owned runtime-registry accessors for channel, provider, tool, service, CLI, command, gateway-method, and HTTP-route consumers first, then moving channel, provider, tool, command, HTTP-route, gateway-method, CLI, and service storage into that host-owned state while keeping mirrored legacy compatibility arrays and handler maps
-- by moving plugin command duplicate enforcement, registration, matching, execution, listing, native command-spec projection, and loader reload clearing into `src/extension-host/command-runtime.ts` while keeping the legacy command module as a compatibility facade
+- by moving plugin command duplicate enforcement, registration, matching, execution, listing, native command-spec projection, and loader reload clearing into `src/extension-host/contributions/command-runtime.ts` while keeping the legacy command module as a compatibility facade
 - by tightening the CLI pre-load fast path to treat any host-known runtime entry surface as already loaded rather than only plugins, channels, or tools
 
 What is still pending from this spec:

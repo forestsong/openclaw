@@ -59,24 +59,24 @@ Relevant prerequisite work that has landed:
 - loader record-state transitions now have a host-owned helper boundary and enforced loader lifecycle state machine, while still preserving compatibility `PluginRecord.status` values
 - loader finalization policy outcomes now have a host-owned helper boundary
 - loader final cache, readiness promotion, and activation finalization now has a host-owned helper boundary
-- low-risk channel, provider, gateway-method, HTTP-route, tool, CLI, service, command, context-engine, and hook compatibility writes now have a host-owned helper boundary in `src/extension-host/registry-writes.ts`
-- legacy internal-hook bridging and typed prompt-injection compatibility policy now have a host-owned helper boundary in `src/extension-host/hook-compat.ts`
-- compatibility `OpenClawPluginApi` composition and logger shaping now have a host-owned helper boundary in `src/extension-host/plugin-api.ts`
-- compatibility plugin-registry facade ownership now has a host-owned helper boundary in `src/extension-host/plugin-registry.ts`
-- compatibility plugin-registry policy now has a host-owned helper boundary in `src/extension-host/plugin-registry-compat.ts`
-- compatibility plugin-registry registration actions now have a host-owned helper boundary in `src/extension-host/plugin-registry-registrations.ts`
-- host-owned runtime registry accessors now have a host-owned helper boundary in `src/extension-host/runtime-registry.ts`, and the channel, provider, tool, command, HTTP-route, gateway-method, CLI, and service slices now keep host-owned storage there with mirrored legacy compatibility views
-- plugin command registration, matching, execution, listing, native command-spec projection, and loader reload clearing now have a host-owned helper boundary in `src/extension-host/command-runtime.ts`
-- service startup, stop ordering, service-context creation, and failure logging now have a host-owned helper boundary in `src/extension-host/service-lifecycle.ts`
-- CLI duplicate detection, registrar invocation, and async failure logging now have a host-owned helper boundary in `src/extension-host/cli-lifecycle.ts`
-- gateway method-id aggregation, plugin diagnostic shaping, and extra-handler composition now have a host-owned helper boundary in `src/extension-host/gateway-methods.ts`
-- plugin tool resolution, conflict handling, optional-tool gating, and plugin-tool metadata tracking now have a host-owned helper boundary in `src/extension-host/tool-runtime.ts`
-- plugin provider projection from registry entries into runtime provider objects now have a host-owned helper boundary in `src/extension-host/provider-runtime.ts`
-- plugin provider discovery filtering, order grouping, and result normalization now have a host-owned helper boundary in `src/extension-host/provider-discovery.ts`
-- provider matching, auth-method selection, config-patch merging, and default-model application now have a host-owned helper boundary in `src/extension-host/provider-auth.ts`
-- provider onboarding option building, model-picker entry building, and provider-method choice resolution now have a host-owned helper boundary in `src/extension-host/provider-wizard.ts`
-- loaded-provider auth application, plugin-enable gating, auth-method execution, and post-auth default-model handling now have a host-owned helper boundary in `src/extension-host/provider-auth-flow.ts`
-- provider post-selection hook lookup and invocation now have a host-owned helper boundary in `src/extension-host/provider-model-selection.ts`
+- low-risk channel, provider, gateway-method, HTTP-route, tool, CLI, service, command, context-engine, and hook compatibility writes now have a host-owned helper boundary in `src/extension-host/contributions/registry-writes.ts`
+- legacy internal-hook bridging and typed prompt-injection compatibility policy now have a host-owned helper boundary in `src/extension-host/compat/hook-compat.ts`
+- compatibility `OpenClawPluginApi` composition and logger shaping now have a host-owned helper boundary in `src/extension-host/compat/plugin-api.ts`
+- compatibility plugin-registry facade ownership now has a host-owned helper boundary in `src/extension-host/compat/plugin-registry.ts`
+- compatibility plugin-registry policy now has a host-owned helper boundary in `src/extension-host/compat/plugin-registry-compat.ts`
+- compatibility plugin-registry registration actions now have a host-owned helper boundary in `src/extension-host/compat/plugin-registry-registrations.ts`
+- host-owned runtime registry accessors now have a host-owned helper boundary in `src/extension-host/contributions/runtime-registry.ts`, and the channel, provider, tool, command, HTTP-route, gateway-method, CLI, and service slices now keep host-owned storage there with mirrored legacy compatibility views
+- plugin command registration, matching, execution, listing, native command-spec projection, and loader reload clearing now have a host-owned helper boundary in `src/extension-host/contributions/command-runtime.ts`
+- service startup, stop ordering, service-context creation, and failure logging now have a host-owned helper boundary in `src/extension-host/contributions/service-lifecycle.ts`
+- CLI duplicate detection, registrar invocation, and async failure logging now have a host-owned helper boundary in `src/extension-host/contributions/cli-lifecycle.ts`
+- gateway method-id aggregation, plugin diagnostic shaping, and extra-handler composition now have a host-owned helper boundary in `src/extension-host/contributions/gateway-methods.ts`
+- plugin tool resolution, conflict handling, optional-tool gating, and plugin-tool metadata tracking now have a host-owned helper boundary in `src/extension-host/contributions/tool-runtime.ts`
+- plugin provider projection from registry entries into runtime provider objects now have a host-owned helper boundary in `src/extension-host/contributions/provider-runtime.ts`
+- plugin provider discovery filtering, order grouping, and result normalization now have a host-owned helper boundary in `src/extension-host/contributions/provider-discovery.ts`
+- provider matching, auth-method selection, config-patch merging, and default-model application now have a host-owned helper boundary in `src/extension-host/contributions/provider-auth.ts`
+- provider onboarding option building, model-picker entry building, and provider-method choice resolution now have a host-owned helper boundary in `src/extension-host/contributions/provider-wizard.ts`
+- loaded-provider auth application, plugin-enable gating, auth-method execution, and post-auth default-model handling now have a host-owned helper boundary in `src/extension-host/contributions/provider-auth-flow.ts`
+- provider post-selection hook lookup and invocation now have a host-owned helper boundary in `src/extension-host/contributions/provider-model-selection.ts`
 
 Why this matters for this spec:
 
