@@ -10,6 +10,14 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, "..");
 const pnpm = "pnpm";
+export const MULTIPASS_FAST_EXTENSION_IDS = Object.freeze([
+  "discord",
+  "imessage",
+  "line",
+  "signal",
+  "slack",
+  "telegram",
+]);
 
 function normalizeRelative(inputPath) {
   return inputPath.split(path.sep).join("/");
@@ -110,6 +118,13 @@ export function listChangedExtensionIds(params = {}) {
   const base = params.base;
   const head = params.head ?? "HEAD";
   return detectChangedExtensionIds(listChangedPaths(base, head));
+}
+
+export function filterMultipassFastExtensionIds(extensionIds) {
+  const allowed = new Set(MULTIPASS_FAST_EXTENSION_IDS);
+  return extensionIds
+    .filter((extensionId) => allowed.has(extensionId))
+    .toSorted((left, right) => left.localeCompare(right));
 }
 
 function resolveExtensionDirectory(targetArg, cwd = process.cwd()) {

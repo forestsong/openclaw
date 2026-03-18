@@ -85,6 +85,8 @@ jobs:
     outputs:
       has_changed_extensions: ${{ steps.changed.outputs.has_changed_extensions }}
       changed_extensions_matrix: ${{ steps.changed.outputs.changed_extensions_matrix }}
+      has_changed_fast_extensions: ${{ steps.changed.outputs.has_changed_fast_extensions }}
+      changed_fast_extensions_matrix: ${{ steps.changed.outputs.changed_fast_extensions_matrix }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -113,13 +115,22 @@ jobs:
         run: |
           node --input-type=module <<'EOF'
           import { appendFileSync } from "node:fs";
-          import { listChangedExtensionIds } from "./scripts/test-extension.mjs";
+          import {
+            filterMultipassFastExtensionIds,
+            listChangedExtensionIds,
+          } from "./scripts/test-extension.mjs";
 
           const extensionIds = listChangedExtensionIds({ base: process.env.BASE_SHA, head: "HEAD" });
+          const fastExtensionIds = filterMultipassFastExtensionIds(extensionIds);
           const matrix = JSON.stringify({ include: extensionIds.map((extension) => ({ extension })) });
+          const fastMatrix = JSON.stringify({
+            include: fastExtensionIds.map((extension) => ({ extension })),
+          });
 
           appendFileSync(process.env.GITHUB_OUTPUT, `has_changed_extensions=${extensionIds.length > 0}\n`, "utf8");
           appendFileSync(process.env.GITHUB_OUTPUT, `changed_extensions_matrix=${matrix}\n`, "utf8");
+          appendFileSync(process.env.GITHUB_OUTPUT, `has_changed_fast_extensions=${fastExtensionIds.length > 0}\n`, "utf8");
+          appendFileSync(process.env.GITHUB_OUTPUT, `changed_fast_extensions_matrix=${fastMatrix}\n`, "utf8");
           EOF
 
   # Build dist once for Node-relevant changes and share it with downstream jobs.
@@ -255,11 +266,11 @@ jobs:
   extension-fast:
     name: "extension-fast (${{ matrix.extension }})"
     needs: [docs-scope, changed-scope, changed-extensions]
-    if: needs.docs-scope.outputs.docs_only != 'true' && needs.changed-scope.outputs.run_node == 'true' && needs.changed-extensions.outputs.has_changed_extensions == 'true'
+    if: needs.docs-scope.outputs.docs_only != 'true' && needs.changed-scope.outputs.run_node == 'true' && needs.changed-extensions.outputs.has_changed_fast_extensions == 'true'
     runs-on: blacksmith-16vcpu-ubuntu-2404
     strategy:
       fail-fast: false
-      matrix: ${{ fromJson(needs.changed-extensions.outputs.changed_extensions_matrix) }}
+      matrix: ${{ fromJson(needs.changed-extensions.outputs.changed_fast_extensions_matrix) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -272,10 +283,20 @@ jobs:
           install-bun: "false"
           use-sticky-disk: "false"
 
-      - name: Run changed extension tests
+      - name: Checkout multipass
+        uses: actions/checkout@v6
+        with:
+          repository: openclaw/multipass
+          path: .ci/multipass
+          fetch-depth: 1
+
+      - name: Install multipass dependencies
+        run: pnpm --dir ./.ci/multipass install --frozen-lockfile
+
+      - name: Run multipass fast extension roundtrip
         env:
           OPENCLAW_CHANGED_EXTENSION: ${{ matrix.extension }}
-        run: pnpm test:extension "$OPENCLAW_CHANGED_EXTENSION"
+        run: node scripts/e2e/run-multipass-extension-fast.mjs --extension "$OPENCLAW_CHANGED_EXTENSION" --multipass-dir ./.ci/multipass
 
   # Types, lint, and format check.
   check:

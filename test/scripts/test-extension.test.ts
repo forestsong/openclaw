@@ -3,7 +3,9 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   detectChangedExtensionIds,
+  filterMultipassFastExtensionIds,
   listAvailableExtensionIds,
+  MULTIPASS_FAST_EXTENSION_IDS,
   resolveExtensionTestPlan,
 } from "../../scripts/test-extension.mjs";
 
@@ -71,5 +73,25 @@ describe("scripts/test-extension.mjs", () => {
     expect(extensionIds).toEqual(
       [...extensionIds].toSorted((left, right) => left.localeCompare(right)),
     );
+  });
+
+  it("filters changed extensions to the multipass-fast matrix", () => {
+    const filtered = filterMultipassFastExtensionIds([
+      "line",
+      "openrouter",
+      "telegram",
+      "microsoft",
+      "discord",
+    ]);
+
+    expect(filtered).toEqual(["discord", "line", "telegram"]);
+    expect(MULTIPASS_FAST_EXTENSION_IDS).toEqual([
+      "discord",
+      "imessage",
+      "line",
+      "signal",
+      "slack",
+      "telegram",
+    ]);
   });
 });
