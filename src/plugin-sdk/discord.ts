@@ -4,8 +4,12 @@ import type {
   DiscordSendEmbeds,
   InspectedDiscordAccount,
   ResolvedDiscordAccount,
-} from "../../extensions/discord/api.js";
+  ThreadBindingManager,
+  ThreadBindingRecord,
+  ThreadBindingTargetKind,
+} from "../channels/discord/plugin-sdk-bridge.js";
 import {
+  collectDiscordStatusIssues,
   createDiscordActionGate,
   inspectDiscordAccount,
   listDiscordAccountIds,
@@ -17,13 +21,7 @@ import {
   resolveDiscordChannelId,
   resolveDiscordGroupRequireMention,
   resolveDiscordGroupToolPolicy,
-  collectDiscordStatusIssues,
-} from "../../extensions/discord/api.js";
-import type {
-  ThreadBindingManager,
-  ThreadBindingRecord,
-  ThreadBindingTargetKind,
-} from "../../extensions/discord/runtime-api.js";
+} from "../channels/discord/plugin-sdk-bridge.js";
 import {
   addRoleDiscord,
   auditDiscordChannelPermissions,
@@ -91,12 +89,10 @@ import {
   unpinMessageDiscord,
   uploadEmojiDiscord,
   uploadStickerDiscord,
-} from "../../extensions/discord/runtime-api.js";
-import { normalizeExplicitDiscordSessionKey } from "../../extensions/discord/session-key-api.js";
-import {
   listDiscordDirectoryGroupsFromConfig,
   listDiscordDirectoryPeersFromConfig,
-} from "../../extensions/discord/src/directory-config.js";
+  normalizeExplicitDiscordSessionKey,
+} from "../channels/discord/plugin-sdk-bridge.js";
 
 export type {
   ChannelAccountSnapshot,

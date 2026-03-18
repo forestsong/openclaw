@@ -1,9 +1,17 @@
 // Public model/catalog helpers for provider plugins.
 
+import type { ModelDefinitionConfig } from "../config/types.models.js";
+import {
+  KILOCODE_DEFAULT_CONTEXT_WINDOW,
+  KILOCODE_DEFAULT_COST,
+  KILOCODE_DEFAULT_MAX_TOKENS,
+  KILOCODE_DEFAULT_MODEL_ID,
+  KILOCODE_DEFAULT_MODEL_NAME,
+} from "../providers/kilocode-shared.js";
 import {
   KIMI_CODING_BASE_URL,
   KIMI_CODING_DEFAULT_MODEL_ID,
-} from "../../extensions/kimi-coding/provider-catalog.js";
+} from "../providers/plugin-sdk-provider-models-bridge.js";
 import {
   buildMinimaxApiModelDefinition,
   buildMinimaxModelDefinition,
@@ -15,14 +23,14 @@ import {
   MINIMAX_HOSTED_MODEL_ID,
   MINIMAX_HOSTED_MODEL_REF,
   MINIMAX_LM_STUDIO_COST,
-} from "../../extensions/minimax/model-definitions.js";
+} from "../providers/plugin-sdk-provider-models-bridge.js";
 import {
   buildMistralModelDefinition,
   MISTRAL_BASE_URL,
   MISTRAL_DEFAULT_COST,
   MISTRAL_DEFAULT_MODEL_ID,
   MISTRAL_DEFAULT_MODEL_REF,
-} from "../../extensions/mistral/model-definitions.js";
+} from "../providers/plugin-sdk-provider-models-bridge.js";
 import {
   buildModelStudioDefaultModelDefinition,
   buildModelStudioModelDefinition,
@@ -31,24 +39,24 @@ import {
   MODELSTUDIO_DEFAULT_MODEL_ID,
   MODELSTUDIO_DEFAULT_MODEL_REF,
   MODELSTUDIO_GLOBAL_BASE_URL,
-} from "../../extensions/modelstudio/model-definitions.js";
-import { MOONSHOT_CN_BASE_URL } from "../../extensions/moonshot/onboard.js";
+} from "../providers/plugin-sdk-provider-models-bridge.js";
+import { MOONSHOT_CN_BASE_URL } from "../providers/plugin-sdk-provider-models-bridge.js";
 import {
   buildMoonshotProvider,
   MOONSHOT_BASE_URL,
   MOONSHOT_DEFAULT_MODEL_ID,
-} from "../../extensions/moonshot/provider-catalog.js";
+} from "../providers/plugin-sdk-provider-models-bridge.js";
 import {
   QIANFAN_BASE_URL,
   QIANFAN_DEFAULT_MODEL_ID,
-} from "../../extensions/qianfan/provider-catalog.js";
+} from "../providers/plugin-sdk-provider-models-bridge.js";
 import {
   buildXaiModelDefinition,
   XAI_BASE_URL,
   XAI_DEFAULT_COST,
   XAI_DEFAULT_MODEL_ID,
   XAI_DEFAULT_MODEL_REF,
-} from "../../extensions/xai/model-definitions.js";
+} from "../providers/plugin-sdk-provider-models-bridge.js";
 import {
   buildZaiModelDefinition,
   resolveZaiBaseUrl,
@@ -59,15 +67,7 @@ import {
   ZAI_DEFAULT_MODEL_ID,
   ZAI_DEFAULT_MODEL_REF,
   ZAI_GLOBAL_BASE_URL,
-} from "../../extensions/zai/model-definitions.js";
-import type { ModelDefinitionConfig } from "../config/types.models.js";
-import {
-  KILOCODE_DEFAULT_CONTEXT_WINDOW,
-  KILOCODE_DEFAULT_COST,
-  KILOCODE_DEFAULT_MAX_TOKENS,
-  KILOCODE_DEFAULT_MODEL_ID,
-  KILOCODE_DEFAULT_MODEL_NAME,
-} from "../providers/kilocode-shared.js";
+} from "../providers/plugin-sdk-provider-models-bridge.js";
 
 export type { ModelApi, ModelProviderConfig } from "../config/types.models.js";
 export type { ModelDefinitionConfig } from "../config/types.models.js";

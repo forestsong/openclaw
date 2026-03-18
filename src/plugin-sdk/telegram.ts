@@ -5,7 +5,8 @@ import type {
   StickerMetadata,
   TelegramButtonStyle,
   TelegramInlineButtons,
-} from "../../extensions/telegram/api.js";
+  TelegramProbe,
+} from "../channels/telegram/plugin-sdk-bridge.js";
 import {
   buildBrowseProvidersButton,
   buildModelsKeyboard,
@@ -35,8 +36,7 @@ import {
   searchStickers,
   sendTelegramPayloadMessages,
   collectTelegramStatusIssues,
-} from "../../extensions/telegram/api.js";
-import type { TelegramProbe } from "../../extensions/telegram/runtime-api.js";
+} from "../channels/telegram/plugin-sdk-bridge.js";
 import {
   auditTelegramGroupMembership,
   collectTelegramUnmentionedGroupIds,
@@ -59,11 +59,9 @@ import {
   setTelegramThreadBindingMaxAgeBySessionKey,
   telegramMessageActions,
   unpinMessageTelegram,
-} from "../../extensions/telegram/runtime-api.js";
-import {
   listTelegramDirectoryGroupsFromConfig,
   listTelegramDirectoryPeersFromConfig,
-} from "../../extensions/telegram/src/directory-config.js";
+} from "../channels/telegram/plugin-sdk-bridge.js";
 
 export type {
   ChannelAccountSnapshot,

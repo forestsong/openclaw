@@ -1,4 +1,8 @@
-import type { InspectedSlackAccount, ResolvedSlackAccount } from "../../extensions/slack/api.js";
+import type {
+  InspectedSlackAccount,
+  ResolvedSlackAccount,
+  SlackActionContext,
+} from "../channels/slack/plugin-sdk-bridge.js";
 import {
   buildSlackThreadingToolContext,
   deleteSlackMessage,
@@ -28,8 +32,7 @@ import {
   resolveSlackReplyToMode,
   sendSlackMessage,
   unpinSlackMessage,
-} from "../../extensions/slack/api.js";
-import type { SlackActionContext } from "../../extensions/slack/runtime-api.js";
+} from "../channels/slack/plugin-sdk-bridge.js";
 import {
   handleSlackAction,
   listSlackDirectoryGroupsLive,
@@ -39,11 +42,9 @@ import {
   resolveSlackChannelAllowlist,
   resolveSlackUserAllowlist,
   sendMessageSlack,
-} from "../../extensions/slack/runtime-api.js";
-import {
   listSlackDirectoryGroupsFromConfig,
   listSlackDirectoryPeersFromConfig,
-} from "../../extensions/slack/src/directory-config.js";
+} from "../channels/slack/plugin-sdk-bridge.js";
 
 export type { OpenClawConfig } from "../config/config.js";
 export type { SlackAccountConfig } from "../config/types.slack.js";

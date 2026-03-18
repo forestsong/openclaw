@@ -4,13 +4,15 @@ import {
   resolveWhatsAppAccount,
   resolveWhatsAppGroupRequireMention,
   resolveWhatsAppGroupToolPolicy,
-} from "../../extensions/whatsapp/api.js";
+  listWhatsAppDirectoryGroupsFromConfig,
+  listWhatsAppDirectoryPeersFromConfig,
+} from "../channels/whatsapp/plugin-sdk-bridge.js";
 import type {
   WebChannelStatus,
   WebInboundMessage,
   WebListenerCloseReason,
   WebMonitorTuning,
-} from "../../extensions/whatsapp/runtime-api.js";
+} from "../channels/whatsapp/plugin-sdk-bridge.js";
 import {
   createWhatsAppLoginTool,
   createWaSocket,
@@ -42,11 +44,7 @@ import {
   waitForWaConnection,
   WA_WEB_AUTH_DIR,
   webAuthExists,
-} from "../../extensions/whatsapp/runtime-api.js";
-import {
-  listWhatsAppDirectoryGroupsFromConfig,
-  listWhatsAppDirectoryPeersFromConfig,
-} from "../../extensions/whatsapp/src/directory-config.js";
+} from "../channels/whatsapp/plugin-sdk-bridge.js";
 
 export type { ChannelMessageActionName } from "../channels/plugins/types.js";
 export type { OpenClawConfig } from "../config/config.js";
