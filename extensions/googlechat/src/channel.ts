@@ -27,6 +27,7 @@ import {
   type OpenClawConfig,
 } from "openclaw/plugin-sdk/googlechat";
 import { GoogleChatConfigSchema } from "openclaw/plugin-sdk/googlechat";
+import { createLazyRuntimeNamedExport } from "openclaw/plugin-sdk/lazy-runtime";
 import { buildPassiveProbedChannelStatusSummary } from "../../shared/channel-status-summary.js";
 import {
   listGoogleChatAccountIds,
@@ -47,9 +48,10 @@ import {
 
 const meta = getChatChannelMeta("googlechat");
 
-async function loadGoogleChatChannelRuntime() {
-  return await import("./channel.runtime.js");
-}
+const loadGoogleChatChannelRuntime = createLazyRuntimeNamedExport(
+  () => import("./channel.runtime.js"),
+  "googleChatChannelRuntime",
+);
 
 const formatAllowFromEntry = (entry: string) =>
   entry

@@ -13,7 +13,7 @@ import type {
   ChannelSetupWizard,
   ChannelSetupWizardTextInput,
 } from "openclaw/plugin-sdk/setup";
-import { formatDocsLink } from "../../../src/terminal/links.js";
+import { formatDocsLink } from "openclaw/plugin-sdk/setup-tools";
 import {
   listIMessageAccountIds,
   resolveDefaultIMessageAccountId,

@@ -18,7 +18,7 @@ import {
   type ChannelSetupWizard,
   type ChannelSetupWizardAllowFromEntry,
 } from "openclaw/plugin-sdk/setup";
-import { formatDocsLink } from "../../../src/terminal/links.js";
+import { formatDocsLink } from "openclaw/plugin-sdk/setup-tools";
 import { inspectSlackAccount } from "./account-inspect.js";
 import { listSlackAccountIds, resolveSlackAccount, type ResolvedSlackAccount } from "./accounts.js";
 import {
