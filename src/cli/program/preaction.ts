@@ -1,3 +1,4 @@
+import path from "node:path";
 import type { Command } from "commander";
 import { setVerbose } from "../../globals.js";
 import { isTruthyEnvValue } from "../../infra/env.js";
@@ -5,6 +6,7 @@ import { routeLogsToStderr } from "../../logging/console.js";
 import type { LogLevel } from "../../logging/levels.js";
 import { loggingState } from "../../logging/state.js";
 import { defaultRuntime } from "../../runtime.js";
+import { resolveUserPath } from "../../utils.js";
 import { getCommandPathWithRootOptions, getVerboseFlag, hasHelpOrVersion } from "../argv.js";
 import { emitCliBanner } from "../banner.js";
 import { resolveCliName } from "../cli-name.js";
@@ -81,6 +83,79 @@ function shouldLoadPluginsForCommand(commandPath: string[], jsonOutputMode: bool
   }
   return true;
 }
+
+function isMatrixInstallRecoverySpec(rawSpec: string): boolean {
+  const trimmed = rawSpec.trim();
+  if (!trimmed) {
+    return false;
+  }
+  if (trimmed === "@openclaw/matrix") {
+    return true;
+  }
+  const resolved = path.resolve(resolveUserPath(trimmed));
+  return (
+    path.basename(resolved) === "matrix" && path.basename(path.dirname(resolved)) === "extensions"
+  );
+}
+
+function resolvePluginInstallSpecFromArgv(argv: string[], commandPath: string[]): string | null {
+  const args = argv.slice(2);
+  let cursor = 0;
+  for (const segment of commandPath) {
+    while (cursor < args.length && args[cursor] !== segment) {
+      cursor += 1;
+    }
+    if (cursor >= args.length) {
+      return null;
+    }
+    cursor += 1;
+  }
+  while (cursor < args.length) {
+    const token = args[cursor];
+    if (!token.startsWith("-")) {
+      return token;
+    }
+    cursor += 1;
+    if (token === "--marketplace" && cursor < args.length) {
+      cursor += 1;
+    }
+  }
+  return null;
+}
+
+function hasMarketplaceOptionInArgv(argv: string[], commandPath: string[]): boolean {
+  const args = argv.slice(2);
+  let cursor = 0;
+  for (const segment of commandPath) {
+    while (cursor < args.length && args[cursor] !== segment) {
+      cursor += 1;
+    }
+    if (cursor >= args.length) {
+      return false;
+    }
+    cursor += 1;
+  }
+  return args.slice(cursor).includes("--marketplace");
+}
+
+function shouldAllowInvalidConfigForAction(actionCommand: Command, commandPath: string[]): boolean {
+  if (commandPath[0] !== "plugins" || commandPath[1] !== "install") {
+    return false;
+  }
+  const opts = actionCommand.opts<Record<string, unknown>>();
+  if (
+    (typeof opts.marketplace === "string" && opts.marketplace.trim()) ||
+    hasMarketplaceOptionInArgv(process.argv, commandPath)
+  ) {
+    return false;
+  }
+  const rawSpec =
+    (typeof actionCommand.processedArgs?.[0] === "string"
+      ? actionCommand.processedArgs[0]
+      : null) ?? resolvePluginInstallSpecFromArgv(process.argv, commandPath);
+  return typeof rawSpec === "string" && isMatrixInstallRecoverySpec(rawSpec);
+}
+
 function getRootCommand(command: Command): Command {
   let current = command;
   while (current.parent) {
@@ -133,10 +208,12 @@ export function registerPreActionHooks(program: Command, programVersion: string)
     if (shouldBypassConfigGuard(commandPath)) {
       return;
     }
+    const allowInvalid = shouldAllowInvalidConfigForAction(actionCommand, commandPath);
     const { ensureConfigReady } = await loadConfigGuardModule();
     await ensureConfigReady({
       runtime: defaultRuntime,
       commandPath,
+      ...(allowInvalid ? { allowInvalid: true } : {}),
       ...(jsonOutputMode ? { suppressDoctorStdout: true } : {}),
     });
     // Load plugins for commands that need channel access.

@@ -10,6 +10,8 @@ Docs: https://docs.openclaw.ai
 
 ### Fixes
 
+- Plugins/Matrix install recovery: scope invalid-config `plugins install` recovery to explicit Matrix reinstalls, so unrelated installs fail closed again and no longer strip Matrix config or leave partial install side effects behind. (#53180) Thanks @lupuletic.
+
 ## 2026.3.23
 
 ### Breaking

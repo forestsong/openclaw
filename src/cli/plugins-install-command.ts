@@ -1,11 +1,12 @@
 import fs from "node:fs";
+import path from "node:path";
 import { cleanStaleMatrixPluginConfig } from "../commands/doctor/providers/matrix.js";
 import type { OpenClawConfig } from "../config/config.js";
 import { loadConfig, readConfigFileSnapshot } from "../config/config.js";
 import { installHooksFromNpmSpec, installHooksFromPath } from "../hooks/install.js";
 import { resolveArchiveKind } from "../infra/archive.js";
 import { parseClawHubPluginSpec } from "../infra/clawhub.js";
-import { extractErrorCode } from "../infra/errors.js";
+import { extractErrorCode, formatErrorMessage } from "../infra/errors.js";
 import { type BundledPluginSource, findBundledPluginSource } from "../plugins/bundled-sources.js";
 import { formatClawHubSpecifier, installPluginFromClawHub } from "../plugins/clawhub.js";
 import { installPluginFromNpmSpec, installPluginFromPath } from "../plugins/install.js";
@@ -169,34 +170,79 @@ async function tryInstallHookPackFromNpmSpec(params: {
   return { ok: true };
 }
 
+function isMatrixRecoveryInstallRequest(params: {
+  rawSpec: string;
+  normalizedSpec: string;
+  resolvedPath?: string;
+  marketplace?: string;
+}): boolean {
+  if (params.marketplace) {
+    return false;
+  }
+  const candidates = [params.rawSpec.trim(), params.normalizedSpec.trim()];
+  if (candidates.includes("@openclaw/matrix")) {
+    return true;
+  }
+  if (!params.resolvedPath) {
+    return false;
+  }
+  return (
+    path.basename(params.resolvedPath) === "matrix" &&
+    path.basename(path.dirname(params.resolvedPath)) === "extensions"
+  );
+}
+
+function isAllowedMatrixRecoveryIssue(issue: { path?: string; message?: string }): boolean {
+  return (
+    (issue.path === "channels.matrix" && issue.message === "unknown channel id: matrix") ||
+    (issue.path === "plugins.load.paths" &&
+      typeof issue.message === "string" &&
+      issue.message.includes("plugin path not found"))
+  );
+}
+
+function buildInvalidPluginInstallConfigError(message: string): Error {
+  const error = new Error(message);
+  (error as { code?: string }).code = "INVALID_CONFIG";
+  return error;
+}
+
 // loadConfig() throws when config is invalid; fall back to the raw config
-// snapshot so repair-oriented installs (e.g. reinstalling a broken Matrix
-// plugin) can still proceed.
-// Only catch config-validation errors — real failures (fs permission, OOM)
-// must surface so the user sees the actual problem.
-// Narrow guard: only proceed from the snapshot when the file was parsed
-// successfully (snapshot.parsed has content). For parse/read failures the
-// snapshot config is {} which would cause writeConfigFile() to overwrite
-// the user's real config with a minimal stub (#52899 concern 4).
-export async function loadConfigForInstall(): Promise<OpenClawConfig> {
+// snapshot only for the explicit Matrix reinstall recovery path.
+export async function loadConfigForInstall(params: {
+  rawSpec: string;
+  normalizedSpec: string;
+  resolvedPath?: string;
+  marketplace?: string;
+}): Promise<OpenClawConfig> {
   try {
-    const cfg = loadConfig();
-    const cleaned = await cleanStaleMatrixPluginConfig(cfg);
-    return cleaned.config;
+    return loadConfig();
   } catch (err) {
     if (extractErrorCode(err) !== "INVALID_CONFIG") {
       throw err;
     }
   }
-  // Config validation failed — recover from the raw snapshot.
+  if (!isMatrixRecoveryInstallRequest(params)) {
+    throw buildInvalidPluginInstallConfigError(
+      "Config invalid; run `openclaw doctor --fix` before installing plugins.",
+    );
+  }
+
   const snapshot = await readConfigFileSnapshot();
   const parsed = (snapshot.parsed ?? {}) as Record<string, unknown>;
   if (!snapshot.exists || Object.keys(parsed).length === 0) {
-    const configErr = new Error(
+    throw buildInvalidPluginInstallConfigError(
       "Config file could not be parsed; run `openclaw doctor` to repair it.",
     );
-    (configErr as { code?: string }).code = "INVALID_CONFIG";
-    throw configErr;
+  }
+  if (
+    snapshot.legacyIssues.length > 0 ||
+    snapshot.issues.length === 0 ||
+    snapshot.issues.some((issue) => !isAllowedMatrixRecoveryIssue(issue))
+  ) {
+    throw buildInvalidPluginInstallConfigError(
+      "Config invalid outside the Matrix upgrade recovery path; run `openclaw doctor --fix` before reinstalling Matrix.",
+    );
   }
   const cleaned = await cleanStaleMatrixPluginConfig(snapshot.config);
   return cleaned.config;
@@ -220,6 +266,25 @@ export async function runPluginInstallCommand(params: {
     marketplace:
       params.opts.marketplace ?? (shorthand?.ok ? shorthand.marketplaceSource : undefined),
   };
+  const fileSpec = !opts.marketplace ? resolveFileNpmSpecToLocalPath(raw) : null;
+  if (fileSpec && !fileSpec.ok) {
+    defaultRuntime.error(fileSpec.error);
+    return defaultRuntime.exit(1);
+  }
+  const normalized = fileSpec && fileSpec.ok ? fileSpec.path : raw;
+  const resolved = !opts.marketplace ? resolveUserPath(normalized) : undefined;
+  const cfg = await loadConfigForInstall({
+    rawSpec: raw,
+    normalizedSpec: normalized,
+    resolvedPath: resolved,
+    marketplace: opts.marketplace,
+  }).catch((error: unknown) => {
+    defaultRuntime.error(formatErrorMessage(error));
+    return null;
+  });
+  if (!cfg) {
+    return defaultRuntime.exit(1);
+  }
 
   if (opts.marketplace) {
     if (opts.link) {
@@ -231,7 +296,6 @@ export async function runPluginInstallCommand(params: {
       return defaultRuntime.exit(1);
     }
 
-    const cfg = await loadConfigForInstall();
     const result = await installPluginFromMarketplace({
       marketplace: opts.marketplace,
       plugin: raw,
@@ -258,16 +322,7 @@ export async function runPluginInstallCommand(params: {
     return;
   }
 
-  const fileSpec = resolveFileNpmSpecToLocalPath(raw);
-  if (fileSpec && !fileSpec.ok) {
-    defaultRuntime.error(fileSpec.error);
-    return defaultRuntime.exit(1);
-  }
-  const normalized = fileSpec && fileSpec.ok ? fileSpec.path : raw;
-  const resolved = resolveUserPath(normalized);
-  const cfg = await loadConfigForInstall();
-
-  if (fs.existsSync(resolved)) {
+  if (resolved && fs.existsSync(resolved)) {
     if (opts.link) {
       const existing = cfg.plugins?.load?.paths ?? [];
       const merged = Array.from(new Set([...existing, resolved]));
@@ -360,7 +415,7 @@ export async function runPluginInstallCommand(params: {
       ".zip",
     ])
   ) {
-    defaultRuntime.error(`Path not found: ${resolved}`);
+    defaultRuntime.error(`Path not found: ${resolved ?? normalized}`);
     return defaultRuntime.exit(1);
   }
 

@@ -12,6 +12,10 @@ function createWriteStdoutArgv(output: string): string[] {
   return ["/usr/bin/printf", "%s", output];
 }
 
+function createSleepArgv(ms: number): string[] {
+  return [process.execPath, "-e", `setTimeout(() => {}, ${Math.max(1, Math.floor(ms))})`];
+}
+
 async function spawnChild(supervisor: ProcessSupervisor, options: ChildSpawnOptions) {
   return supervisor.spawn({
     ...options,
@@ -39,9 +43,9 @@ describe("process supervisor", () => {
     const supervisor = createProcessSupervisor();
     const run = await spawnChild(supervisor, {
       sessionId: "s1",
-      argv: [process.execPath, "-e", "setTimeout(() => {}, 14)"],
-      timeoutMs: 300,
-      noOutputTimeoutMs: 5,
+      argv: createSleepArgv(250),
+      timeoutMs: 500,
+      noOutputTimeoutMs: 40,
       stdinMode: "pipe-closed",
     });
     const exit = await run.wait();
@@ -80,8 +84,8 @@ describe("process supervisor", () => {
     const supervisor = createProcessSupervisor();
     const run = await spawnChild(supervisor, {
       sessionId: "s-timeout",
-      argv: [process.execPath, "-e", "setTimeout(() => {}, 12)"],
-      timeoutMs: 1,
+      argv: createSleepArgv(250),
+      timeoutMs: 20,
       stdinMode: "pipe-closed",
     });
     const exit = await run.wait();
