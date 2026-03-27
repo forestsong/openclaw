@@ -1,4 +1,3 @@
-import { createSyntheticSourceInfo } from "@mariozechner/pi-coding-agent";
 import { describe, expect, it } from "vitest";
 import type { SessionSystemPromptReport } from "../config/sessions/types.js";
 import { resolveSkillsPromptForRun } from "./skills.js";
@@ -59,9 +58,7 @@ describe("resolveSkillsPromptForRun", () => {
         description: "Demo",
         filePath: "/app/skills/demo-skill/SKILL.md",
         baseDir: "/app/skills/demo-skill",
-        sourceInfo: createSyntheticSourceInfo("/app/skills/demo-skill/SKILL.md", {
-          source: "openclaw-bundled",
-        }),
+        source: "openclaw-bundled",
         disableModelInvocation: false,
       },
       frontmatter: {},
