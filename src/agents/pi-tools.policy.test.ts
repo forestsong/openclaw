@@ -235,10 +235,10 @@ describe("resolveSubagentToolPolicy depth awareness", () => {
 
     const policy = resolveSubagentToolPolicyForSession(cfg, "agent:main:subagent:planner");
     expect(isToolAllowedByPolicyName("read", policy)).toBe(true);
+    expect(isToolAllowedByPolicyName("edit", policy)).toBe(true);
+    expect(isToolAllowedByPolicyName("write", policy)).toBe(true);
     expect(isToolAllowedByPolicyName("browser", policy)).toBe(true);
     expect(isToolAllowedByPolicyName("web_search", policy)).toBe(true);
-    expect(isToolAllowedByPolicyName("edit", policy)).toBe(false);
-    expect(isToolAllowedByPolicyName("write", policy)).toBe(false);
     expect(isToolAllowedByPolicyName("exec", policy)).toBe(false);
     expect(isToolAllowedByPolicyName("sessions_spawn", policy)).toBe(true);
   });
@@ -348,11 +348,11 @@ describe("resolveSubagentToolPolicy depth awareness", () => {
 
     const policy = resolveSubagentToolPolicyForSession(cfg, "agent:main:subagent:evaluator");
     expect(isToolAllowedByPolicyName("read", policy)).toBe(true);
+    expect(isToolAllowedByPolicyName("edit", policy)).toBe(true);
+    expect(isToolAllowedByPolicyName("write", policy)).toBe(true);
     expect(isToolAllowedByPolicyName("exec", policy)).toBe(true);
     expect(isToolAllowedByPolicyName("process", policy)).toBe(true);
     expect(isToolAllowedByPolicyName("browser", policy)).toBe(true);
-    expect(isToolAllowedByPolicyName("edit", policy)).toBe(false);
-    expect(isToolAllowedByPolicyName("write", policy)).toBe(false);
   });
 
   it("defaults to leaf behavior when no depth is provided", () => {

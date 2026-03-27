@@ -49,6 +49,10 @@ import { cleanToolSchemaForGemini, normalizeToolParameters } from "./pi-tools.sc
 import type { AnyAgentTool } from "./pi-tools.types.js";
 import type { SandboxContext } from "./sandbox.js";
 import {
+  normalizeSubagentRolePreset,
+  resolveStoredSubagentCapabilities,
+} from "./subagent-capabilities.js";
+import {
   constrainTaskProfileToolPackToAvailableTools,
   resolveTaskProfileToolPack,
 } from "./task-profile-tool-pack.js";
@@ -339,6 +343,13 @@ export function createOpenClawCodingTools(options?: {
     sessionKey: options?.sessionKey,
     workspaceDir: options?.workspaceDir,
   });
+  const storedSubagentCapabilities =
+    options?.sessionKey && isSubagentSessionKey(options.sessionKey)
+      ? resolveStoredSubagentCapabilities(options.sessionKey, { cfg: options.config })
+      : undefined;
+  const hasRolePresetToolSurface = Boolean(
+    normalizeSubagentRolePreset(storedSubagentCapabilities?.rolePreset),
+  );
   const hasExplicitAllowlist =
     Boolean(globalPolicy?.allow?.length) ||
     Boolean(globalProviderPolicy?.allow?.length) ||
@@ -347,12 +358,17 @@ export function createOpenClawCodingTools(options?: {
     Boolean(groupPolicy?.allow?.length);
   const shouldApplyDefaultTaskProfileToolPack =
     Boolean(options?.taskPrompt?.trim()) &&
+    !hasRolePresetToolSurface &&
     !profile &&
     !providerProfile &&
     !hasExplicitAllowlist &&
     Boolean(defaultTaskProfileToolPack.policy?.allow?.length);
   const shouldApplyDynamicToolPruning =
-    Boolean(options?.taskPrompt?.trim()) && !profile && !providerProfile && !hasExplicitAllowlist;
+    Boolean(options?.taskPrompt?.trim()) &&
+    !hasRolePresetToolSurface &&
+    !profile &&
+    !providerProfile &&
+    !hasExplicitAllowlist;
 
   const profilePolicyWithAlsoAllow = mergeAlsoAllowPolicy(profilePolicy, profileAlsoAllow);
   const providerProfilePolicyWithAlsoAllow = mergeAlsoAllowPolicy(
