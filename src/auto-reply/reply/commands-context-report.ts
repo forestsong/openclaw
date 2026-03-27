@@ -1,4 +1,15 @@
 import { analyzeBootstrapBudget } from "../../agents/bootstrap-budget.js";
+import {
+  buildRunArtifactFilename,
+  readBuildRunArtifactFromRunDir,
+  readBuildRunRoundState,
+  readBuildRunRoundStateFromRunDir,
+  resolveBuildRunArtifactPath,
+  resolveBuildRunArtifactPathFromRunDir,
+  resolveBuildRunRoot,
+  type BuildRunRoundState,
+  type EvalReportArtifact,
+} from "../../agents/build-runs.js";
 import { installCronHealthCheckSuggestion } from "../../agents/cron-health-check-install.js";
 import {
   buildCronHealthCheckSuggestion,
@@ -258,6 +269,154 @@ function formatFailureRuleSuggestionsLine(suggestions: FailureRuleSuggestion[]):
   }
   const top = suggestions[0]?.title ? ` | top=${suggestions[0].title}` : "";
   return `Failure-to-rule suggestions: ${formatInt(suggestions.length)} candidate rule(s)${top}`;
+}
+
+type BuildRunContextSummary = {
+  buildRunId?: string;
+  buildRunDir: string;
+  acceptancePath: string;
+  verifyPackPath: string;
+  latestRound: number | null;
+  latestBuildReport?: BuildRunRoundState["latestBuildReport"];
+  latestEvalReport?: BuildRunRoundState["latestEvalReport"];
+  latestEvalArtifact?: EvalReportArtifact;
+  error?: string;
+};
+
+function normalizeBuildRunText(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : undefined;
+}
+
+function isMissingFileError(error: unknown): boolean {
+  return (
+    !!error &&
+    typeof error === "object" &&
+    "code" in error &&
+    (error as { code?: unknown }).code === "ENOENT"
+  );
+}
+
+async function resolveBuildRunContextSummary(params: {
+  workspaceDir: string;
+  report: SessionSystemPromptReport;
+  sessionEntry?: HandleCommandsParams["sessionEntry"];
+}): Promise<BuildRunContextSummary | undefined> {
+  const buildRunId =
+    normalizeBuildRunText(params.report.delegationProfile?.buildRunId) ??
+    normalizeBuildRunText(params.sessionEntry?.spawnedBuildRunId);
+  const buildRunDirFromReport =
+    normalizeBuildRunText(params.report.delegationProfile?.buildRunDir) ??
+    normalizeBuildRunText(params.sessionEntry?.spawnedBuildRunDir);
+  if (!buildRunId && !buildRunDirFromReport) {
+    return undefined;
+  }
+
+  try {
+    const runDir =
+      buildRunDirFromReport ??
+      resolveBuildRunRoot({
+        workspaceDir: params.workspaceDir,
+        runId: buildRunId ?? "unknown",
+      }).runDir;
+    const roundState = buildRunDirFromReport
+      ? await readBuildRunRoundStateFromRunDir({ runDir })
+      : await readBuildRunRoundState({
+          workspaceDir: params.workspaceDir,
+          runId: buildRunId ?? "unknown",
+        });
+    let latestEvalArtifact: EvalReportArtifact | undefined;
+    try {
+      latestEvalArtifact = await readBuildRunArtifactFromRunDir({
+        runDir,
+        artifactName: "eval-report",
+      });
+    } catch (error) {
+      if (!isMissingFileError(error instanceof Error ? error.cause : undefined)) {
+        throw error;
+      }
+    }
+    return {
+      ...(buildRunId ? { buildRunId } : {}),
+      buildRunDir: runDir,
+      acceptancePath: resolveBuildRunArtifactPathFromRunDir({
+        runDir,
+        artifactName: "acceptance",
+      }),
+      verifyPackPath: resolveBuildRunArtifactPathFromRunDir({
+        runDir,
+        artifactName: "verify-pack",
+      }),
+      latestRound: roundState.latestRound,
+      ...(roundState.latestBuildReport ? { latestBuildReport: roundState.latestBuildReport } : {}),
+      ...(roundState.latestEvalReport ? { latestEvalReport: roundState.latestEvalReport } : {}),
+      ...(latestEvalArtifact ? { latestEvalArtifact } : {}),
+    };
+  } catch (error) {
+    const runDir =
+      buildRunDirFromReport ??
+      (buildRunId
+        ? resolveBuildRunRoot({
+            workspaceDir: params.workspaceDir,
+            runId: buildRunId,
+          }).runDir
+        : params.workspaceDir);
+    return {
+      ...(buildRunId ? { buildRunId } : {}),
+      buildRunDir: runDir,
+      acceptancePath: buildRunDirFromReport
+        ? resolveBuildRunArtifactPathFromRunDir({
+            runDir,
+            artifactName: "acceptance",
+          })
+        : buildRunId
+          ? resolveBuildRunArtifactPath({
+              workspaceDir: params.workspaceDir,
+              runId: buildRunId,
+              artifactName: "acceptance",
+            })
+          : `${runDir}/${buildRunArtifactFilename("acceptance")}`,
+      verifyPackPath: buildRunDirFromReport
+        ? resolveBuildRunArtifactPathFromRunDir({
+            runDir,
+            artifactName: "verify-pack",
+          })
+        : buildRunId
+          ? resolveBuildRunArtifactPath({
+              workspaceDir: params.workspaceDir,
+              runId: buildRunId,
+              artifactName: "verify-pack",
+            })
+          : `${runDir}/${buildRunArtifactFilename("verify-pack")}`,
+      latestRound: null,
+      error: error instanceof Error ? error.message : "unable to inspect build run",
+    };
+  }
+}
+
+function formatBuildRunLine(summary?: BuildRunContextSummary): string | undefined {
+  if (!summary) {
+    return undefined;
+  }
+  const id = summary.buildRunId ? ` ${summary.buildRunId}` : "";
+  if (summary.error) {
+    return `Build run:${id} | artifact state unavailable | ${summary.error}`;
+  }
+  const latest =
+    summary.latestRound != null ? `latest=${formatInt(summary.latestRound)}` : "latest=none";
+  const builder = summary.latestBuildReport
+    ? `builder=${formatInt(summary.latestBuildReport.round)}`
+    : "builder=none";
+  const evaluator = summary.latestEvalReport
+    ? `evaluator=${formatInt(summary.latestEvalReport.round)} ${summary.latestEvalReport.status}`
+    : "evaluator=none";
+  const findings = summary.latestEvalArtifact
+    ? ` | findings=${formatInt(summary.latestEvalArtifact.blocking_findings.length)}`
+    : "";
+  const top = summary.latestEvalArtifact?.blocking_findings[0]?.summary
+    ? ` | top=${summary.latestEvalArtifact.blocking_findings[0].summary}`
+    : "";
+  return `Build run:${id} | ${latest} | ${builder} | ${evaluator}${findings}${top}`;
 }
 
 function formatCronHealthCheckLine(suggestion: CronHealthCheckSuggestion): string {
@@ -577,6 +736,11 @@ export async function buildContextReply(params: HandleCommandsParams): Promise<R
   const docGardeningSuggestion = await buildDocGardeningSuggestion({
     workspaceDir: params.workspaceDir,
   });
+  const buildRunSummary = await resolveBuildRunContextSummary({
+    workspaceDir: params.workspaceDir,
+    report,
+    sessionEntry: params.sessionEntry,
+  });
   const workspaceHealthDashboard = buildWorkspaceHealthDashboard({
     workspaceDir: params.workspaceDir,
     sessionStore: params.sessionStore,
@@ -706,6 +870,7 @@ export async function buildContextReply(params: HandleCommandsParams): Promise<R
           failureRuleSuggestions,
           cronHealthCheckSuggestion,
           docGardeningSuggestion,
+          buildRunSummary,
           workspaceHealthDashboard,
           highlights,
           session,
@@ -823,6 +988,7 @@ export async function buildContextReply(params: HandleCommandsParams): Promise<R
     `Workspace: ${workspaceLabel}`,
     formatTaskProfileLine(report),
     formatDelegationProfileLine(report),
+    ...(formatBuildRunLine(buildRunSummary) ? [formatBuildRunLine(buildRunSummary)!] : []),
     formatWorkspacePolicyDiscoveryLine(report),
     formatWorkspacePolicyMergeLine(report),
     formatPolicySlicingLine(report),
@@ -936,10 +1102,23 @@ export async function buildContextReply(params: HandleCommandsParams): Promise<R
           `- ${entry.name}: removed ${formatCharsAndTokens(entry.blockChars)} | reason=${entry.reason}`,
       ) ?? [];
     const verifyLines =
-      params.sessionEntry?.verifyReport?.entries.map(
-        (entry) =>
-          `- ${entry.kind}: ${entry.status} | exit=${entry.exitCode ?? "null"} | ${entry.command}`,
-      ) ?? [];
+      params.sessionEntry?.verifyReport?.entries.map((entry) => {
+        const evidence =
+          entry.evidence
+            ?.map((item) =>
+              item.path
+                ? `${item.kind}:${item.path}`
+                : item.url
+                  ? `${item.kind}:${item.url}`
+                  : item.kind,
+            )
+            .join(", ") ?? "";
+        return `- ${entry.kind}: ${entry.status} | exit=${entry.exitCode ?? "null"} | ${
+          entry.checkId ? `id=${entry.checkId} | ` : ""
+        }${entry.command}${entry.message ? ` | ${entry.message}` : ""}${
+          evidence ? ` | evidence=${evidence}` : ""
+        }`;
+      }) ?? [];
     const failureDetailLines =
       params.sessionEntry?.failureReport && params.sessionEntry.failureReport.status === "failed"
         ? [
@@ -989,11 +1168,49 @@ export async function buildContextReply(params: HandleCommandsParams): Promise<R
       ),
       `- message=${docGardeningSuggestion.message}`,
     ];
+    const buildRunLines = buildRunSummary
+      ? [
+          ...(buildRunSummary.buildRunId ? [`- buildRunId=${buildRunSummary.buildRunId}`] : []),
+          `- buildRunDir=${buildRunSummary.buildRunDir}`,
+          `- acceptance=${buildRunSummary.acceptancePath}`,
+          `- verifyPack=${buildRunSummary.verifyPackPath}`,
+          `- latestRound=${buildRunSummary.latestRound ?? "none"}`,
+          ...(buildRunSummary.latestBuildReport
+            ? [
+                `- latestBuildRound=${buildRunSummary.latestBuildReport.round}`,
+                `- latestBuildSummary=${buildRunSummary.latestBuildReport.summary}`,
+                `- latestBuildReportPath=${buildRunSummary.latestBuildReport.path}`,
+              ]
+            : []),
+          ...(buildRunSummary.latestEvalReport
+            ? [
+                `- latestEvalRound=${buildRunSummary.latestEvalReport.round}`,
+                `- latestEvalStatus=${buildRunSummary.latestEvalReport.status}`,
+                `- latestEvalSummary=${buildRunSummary.latestEvalReport.summary}`,
+                `- latestEvalReportPath=${buildRunSummary.latestEvalReport.path}`,
+              ]
+            : []),
+          ...(buildRunSummary.latestEvalArtifact?.recommended_next_role
+            ? [`- recommendedNextRole=${buildRunSummary.latestEvalArtifact.recommended_next_role}`]
+            : []),
+          ...(buildRunSummary.latestEvalArtifact?.blocking_findings.length
+            ? buildRunSummary.latestEvalArtifact.blocking_findings.map(
+                (entry) =>
+                  `- finding=${entry.id} | ${entry.severity} | ${entry.category} | ${entry.summary}${entry.evidence_refs.length ? ` | evidence=${entry.evidence_refs.join(", ")}` : ""}`,
+              )
+            : []),
+          ...(buildRunSummary.latestEvalArtifact?.retry_advice.length
+            ? buildRunSummary.latestEvalArtifact.retry_advice.map((entry) => `- retry=${entry}`)
+            : []),
+          ...(buildRunSummary.error ? [`- error=${buildRunSummary.error}`] : []),
+        ]
+      : [];
 
     return {
       text: [
         "🧠 Context breakdown (detailed)",
         ...sharedContextLines,
+        ...(buildRunLines.length ? ["", "Build run:", ...buildRunLines] : []),
         ...(workspacePolicyLines.length
           ? ["", "Discovered workspace policy files:", ...workspacePolicyLines]
           : []),

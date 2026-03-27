@@ -41,6 +41,7 @@ export function subscribeEmbeddedPiSession(params: SubscribeEmbeddedPiSessionPar
     assistantTexts: [],
     toolMetas: [],
     verifyEntries: [],
+    verifyObservations: [],
     toolMetaById: new Map(),
     toolSummaryById: new Set(),
     lastToolError: undefined,
@@ -97,6 +98,7 @@ export function subscribeEmbeddedPiSession(params: SubscribeEmbeddedPiSessionPar
   const assistantTexts = state.assistantTexts;
   const toolMetas = state.toolMetas;
   const verifyEntries = state.verifyEntries;
+  const verifyObservations = state.verifyObservations;
   const toolMetaById = state.toolMetaById;
   const toolSummaryById = state.toolSummaryById;
   const messagingToolSentTexts = state.messagingToolSentTexts;
@@ -697,6 +699,7 @@ export function subscribeEmbeddedPiSession(params: SubscribeEmbeddedPiSessionPar
     assistantTexts,
     toolMetas,
     getVerifyEntries: () => verifyEntries.map((entry) => ({ ...entry })),
+    getVerifyObservations: () => verifyObservations.map((entry) => ({ ...entry })),
     unsubscribe,
     isCompacting: () => state.compactionInFlight || state.pendingCompactionRetry > 0,
     isCompactionInFlight: () => state.compactionInFlight,

@@ -10,6 +10,16 @@ export function createBaseToolHandlerState() {
       exitCode: number | null;
       source: "tool-result";
     }>,
+    verifyObservations: [] as Array<{
+      toolName: string;
+      meta?: string;
+      command: string;
+      kind: "test" | "build" | "lint" | "check" | "command";
+      status: "passed" | "failed";
+      exitCode: number | null;
+      source: "tool-result";
+      output?: string;
+    }>,
     toolSummaryById: new Set<string>(),
     lastToolError: undefined,
     pendingMessagingTexts: new Map<string, string>(),

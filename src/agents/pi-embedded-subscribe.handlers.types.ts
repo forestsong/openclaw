@@ -12,6 +12,7 @@ import type {
   SubscribeEmbeddedPiSessionParams,
 } from "./pi-embedded-subscribe.types.js";
 import type { NormalizedUsage } from "./usage.js";
+import type { VerifyObservation } from "./verify-report.js";
 
 export type EmbeddedSubscribeLogger = {
   debug: (message: string, meta?: Record<string, unknown>) => void;
@@ -36,6 +37,7 @@ export type EmbeddedPiSubscribeState = {
   assistantTexts: string[];
   toolMetas: Array<{ toolName?: string; meta?: string }>;
   verifyEntries: SessionVerifyReport["entries"];
+  verifyObservations: VerifyObservation[];
   toolMetaById: Map<string, ToolCallSummary>;
   toolSummaryById: Set<string>;
   lastToolError?: ToolErrorSummary;
@@ -153,6 +155,7 @@ export type ToolHandlerState = Pick<
   | "toolMetaById"
   | "toolMetas"
   | "verifyEntries"
+  | "verifyObservations"
   | "toolSummaryById"
   | "lastToolError"
   | "pendingMessagingTargets"

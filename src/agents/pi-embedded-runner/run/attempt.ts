@@ -102,6 +102,7 @@ import { resolveEffectiveToolFsWorkspaceOnly } from "../../tool-fs-policy.js";
 import { normalizeToolName } from "../../tool-policy.js";
 import type { TranscriptPolicy } from "../../transcript-policy.js";
 import { resolveTranscriptPolicy } from "../../transcript-policy.js";
+import { executeVerifyPack } from "../../verify-pack.js";
 import { buildVerifyReport } from "../../verify-report.js";
 import { DEFAULT_BOOTSTRAP_FILENAME } from "../../workspace.js";
 import { isRunnerAbortError } from "../abort.js";
@@ -2664,6 +2665,7 @@ export async function runEmbeddedAttempt(
         getMessagingToolSentTargets,
         getSuccessfulCronAdds,
         getVerifyEntries,
+        getVerifyObservations,
         didSendViaMessagingTool,
         getLastToolError,
         getUsageTotals,
@@ -3223,6 +3225,19 @@ export async function runEmbeddedAttempt(
           });
       }
 
+      const verifyPackEntries = await executeVerifyPack({
+        workspaceDir: params.workspaceDir,
+        buildRunId: params.buildRunId,
+        buildRunDir: params.buildRunDir,
+        observations: getVerifyObservations(),
+        env: process.env,
+        browser: {
+          available: effectiveTools.some((tool) => tool.name === "browser"),
+          baseUrl: sandboxInfo?.browserBridgeUrl,
+          hostControlAllowed: sandboxInfo?.hostBrowserAllowed ?? true,
+        },
+      });
+
       return {
         aborted,
         timedOut,
@@ -3244,7 +3259,7 @@ export async function runEmbeddedAttempt(
         successfulCronAdds: getSuccessfulCronAdds(),
         verifyReport: buildVerifyReport({
           generatedAt: Date.now(),
-          entries: getVerifyEntries(),
+          entries: [...getVerifyEntries(), ...verifyPackEntries],
         }),
         cloudCodeAssistFormatError: Boolean(
           lastAssistant?.errorMessage && isCloudCodeAssistFormatError(lastAssistant.errorMessage),

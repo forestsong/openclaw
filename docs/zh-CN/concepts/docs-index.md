@@ -20,6 +20,7 @@ title: 文档索引
 - [系统提示词](/concepts/system-prompt)
 - [上下文](/concepts/context)
 - [Harness Roadmap](/concepts/harness-roadmap)
+- [Role-scoped build walkthrough](/zh-CN/concepts/role-scoped-build-walkthrough)
 
 ## Harness 治理
 
@@ -34,6 +35,7 @@ title: 文档索引
 - [Harness agent-first system plan](/exec-plans/harness-agent-first-system)
 - [Role-scoped build loop](/exec-plans/role-scoped-build-loop)
 - [Role-scoped build loop Phase 1 backlog](/exec-plans/role-scoped-build-loop-phase-1-backlog)
+- [Role-scoped build loop Phase 2 backlog](/exec-plans/role-scoped-build-loop-phase-2-backlog)
 
 ## 技术债
 
