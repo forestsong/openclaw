@@ -1,4 +1,5 @@
 import type {
+  CliSessionBinding,
   SessionFailureReport,
   SessionRetryReport,
   SessionSystemPromptReport,
@@ -10,6 +11,7 @@ export type EmbeddedPiAgentMeta = {
   sessionId: string;
   provider: string;
   model: string;
+  cliSessionBinding?: CliSessionBinding;
   compactionCount?: number;
   promptTokens?: number;
   usage?: {
