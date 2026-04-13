@@ -112,6 +112,8 @@ export function resolveSubagentRolePresetRuntimeDefaults(params: {
         systemPromptMode: "minimal",
         toolAllowlist: [
           "read",
+          "edit",
+          "write",
           "browser",
           "web_search",
           "web_fetch",
@@ -142,6 +144,8 @@ export function resolveSubagentRolePresetRuntimeDefaults(params: {
         systemPromptMode: "minimal",
         toolAllowlist: [
           "read",
+          "edit",
+          "write",
           "exec",
           "process",
           "browser",

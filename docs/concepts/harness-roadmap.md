@@ -6,7 +6,7 @@ read_when:
   - You want a repeatable way to update roadmap status after each improvement
 owner: "OpenClaw harness"
 freshness: "weekly"
-last_reviewed: "2026-03-25"
+last_reviewed: "2026-03-27"
 title: "Harness Roadmap"
 ---
 
@@ -33,11 +33,11 @@ Turn OpenClaw into a thinner, more controllable harness by improving:
 
 ## Current snapshot
 
-- Last updated: `2026-03-25`
-- Current phase: `Post-roadmap P5 Phase 1`
-- Current focus: `role presets, build-run artifacts, and role-aware spawn defaults are in place; next up is verify-pack contracts`
-- Latest completed milestone: `P5 Phase 1 issue 3 landed: role-aware spawn defaults now apply bounded tool surfaces, builder prompt mode, and build-run artifact references to spawned runs`
-- Next recommended milestone: `P5 Phase 1 issue 4: verify-pack schema with exec / logs / report checks`
+- Last updated: `2026-03-27`
+- Current phase: `Post-roadmap P5 Phase 2 complete`
+- Current focus: `hold the role-scoped build loop stable through real multi-round usage before defining any Phase 3 automation`
+- Latest completed milestone: `P5 Phase 2 landed: build-run reporting, richer evaluator packs, blocking-finding contracts, and multi-round walkthroughs are now in place`
+- Next recommended milestone: `None - validate P5 with real planner/builder/evaluator runs before defining new backlog`
 
 ## Success metrics
 
@@ -88,16 +88,17 @@ Turn OpenClaw into a thinner, more controllable harness by improving:
 
 ### Post-roadmap backlog
 
-| Status  | Item                                                           | Notes                                                                                                                                                                                     |
-| ------- | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `done`  | Manual policy write-back flow                                  | `/context rule apply <key                                                                                                                                                                 | top> [OPENCLAW.md\|AGENTS.md\|CLAUDE.md]` now turns failure-rule suggestions into explicit policy patches with dedupe markers |
-| `done`  | Cron health-check install flow                                 | `/context cron install` now creates or updates an isolated managed cron job from the current health-check suggestion                                                                      |
-| `done`  | Workspace policy merge/source/conflict reporting               | `workspacePolicyDiscovery` now reports merge order, conflict count, source, tier, and priority for `AGENTS.md`, `OPENCLAW.md`, and `CLAUDE.md`                                            |
-| `done`  | Repo knowledge index / plans / debt structure                  | Added docs index, `exec-plans/`, `tech-debt/`, and key-doc ownership/freshness metadata                                                                                                   |
-| `done`  | Mechanical repo enforcement (P2 first pass)                    | Added harness-core boundary lint, repo-knowledge guard, security-audit remediation coverage, and tests; wired them into `pnpm check`                                                      |
-| `done`  | Workspace health dashboard and trend reporting (P3 first pass) | `/context health` now aggregates workspace sessions into profile-level verify/cost/runtime/retry summaries plus current-vs-previous 7-day prompt/failure/retry trends                     |
-| `done`  | Doc gardening / cleanup automation (P3 completion)             | `/context docs install` now creates or updates an isolated managed cron job that reviews stale repo-knowledge docs, missing knowledge stubs, and metadata drift                           |
-| `doing` | Role-scoped build loop (P5 Phase 1)                            | Role presets and build-run artifacts are now first-class runtime/session concepts; next land role-aware spawn defaults, verify-pack contracts, and a first browser-backed evaluator slice |
+| Status | Item                                                           | Notes                                                                                                                                                                                              |
+| ------ | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `done` | Manual policy write-back flow                                  | `/context rule apply <key                                                                                                                                                                          | top> [OPENCLAW.md\|AGENTS.md\|CLAUDE.md]` now turns failure-rule suggestions into explicit policy patches with dedupe markers |
+| `done` | Cron health-check install flow                                 | `/context cron install` now creates or updates an isolated managed cron job from the current health-check suggestion                                                                               |
+| `done` | Workspace policy merge/source/conflict reporting               | `workspacePolicyDiscovery` now reports merge order, conflict count, source, tier, and priority for `AGENTS.md`, `OPENCLAW.md`, and `CLAUDE.md`                                                     |
+| `done` | Repo knowledge index / plans / debt structure                  | Added docs index, `exec-plans/`, `tech-debt/`, and key-doc ownership/freshness metadata                                                                                                            |
+| `done` | Mechanical repo enforcement (P2 first pass)                    | Added harness-core boundary lint, repo-knowledge guard, security-audit remediation coverage, and tests; wired them into `pnpm check`                                                               |
+| `done` | Workspace health dashboard and trend reporting (P3 first pass) | `/context health` now aggregates workspace sessions into profile-level verify/cost/runtime/retry summaries plus current-vs-previous 7-day prompt/failure/retry trends                              |
+| `done` | Doc gardening / cleanup automation (P3 completion)             | `/context docs install` now creates or updates an isolated managed cron job that reviews stale repo-knowledge docs, missing knowledge stubs, and metadata drift                                    |
+| `done` | Role-scoped build loop (P5 Phase 1)                            | Role presets, build-run artifacts, role-aware spawn defaults, verify-pack contracts, a first browser-backed evaluator slice, and a manual walkthrough are now first-class runtime/session concepts |
+| `done` | Role-scoped build loop (P5 Phase 2)                            | Build/eval artifacts are now round-aware, `/context` can inspect active build runs, evaluator packs cover browser/api/log/artifact checks, and multi-round operating docs are in place             |
 
 ## Why each item matters
 
@@ -477,3 +478,64 @@ After each harness-related improvement:
   - Focused tests passed across tool policy resolution, spawned metadata normalization, delegation reporting, `/context`, sessions_spawn schema coverage, role-aware spawn behavior, and prompt-mode resolution
   - Build passed
 - Next action: Implement verify-pack schema support for exec / logs / report checks
+
+### 2026-03-27
+
+- Change: Landed P5 Phase 1 issue 4 by making `verify-pack.json` a real evaluator contract for `exec`, `logs`, and `report` checks.
+- Evidence:
+  - `src/agents/build-runs.ts` now enforces schema-backed `verify-pack` check kinds instead of a loose placeholder format
+  - New module at `src/agents/verify-pack.ts` loads verify-pack artifacts from build-run roots and turns them into structured verify entries
+  - `src/agents/verify-report.ts`, `src/agents/pi-embedded-subscribe.handlers.tools.ts`, and `src/agents/pi-embedded-runner/run/attempt.ts` now preserve rich exec observations and merge verify-pack results into the existing verify/failure path
+  - Focused tests passed across build-run artifacts, verify-pack execution, verify report strategy handling, tool-result observation capture, failure reporting, and `/context`
+- Next action: Implement a browser-backed evaluator pack
+
+### 2026-03-27
+
+- Change: Landed P5 Phase 1 issue 5 by adding a first browser-backed evaluator slice to `verify-pack.json`.
+- Evidence:
+  - `src/agents/build-runs.ts` now supports a schema-backed `browser` verify-pack check with navigate, action, assert, snapshot, and screenshot options
+  - `src/agents/verify-pack.ts` now reuses the existing browser runtime for navigation, UI assertions, and screenshot evidence instead of inventing a new browser DSL
+  - `src/agents/pi-embedded-runner/run/attempt.ts` now passes run-scoped browser availability and sandbox bridge context into verify-pack execution so evaluator checks respect current tool policy and sandbox routing
+  - `src/config/sessions/types.ts` and `src/auto-reply/reply/commands-context-report.ts` now preserve structured browser evidence paths for verify entries
+  - Focused tests passed across build-run artifact validation, browser verify-pack execution, verify strategy handling, and `/context` formatting
+- Next action: Document the manual role-scoped build walkthrough
+
+### 2026-03-27
+
+- Change: Landed P5 Phase 1 issue 6 by documenting the manual role-scoped build loop end to end.
+- Evidence:
+  - New walkthrough docs at `docs/concepts/role-scoped-build-walkthrough.md` and `docs/zh-CN/concepts/role-scoped-build-walkthrough.md`
+  - `docs/concepts/docs-index.md`, `docs/zh-CN/concepts/docs-index.md`, `docs/exec-plans/README.md`, and `docs/exec-plans/role-scoped-build-loop.md` now point to the walkthrough so it is part of repo knowledge discovery
+  - The walkthrough now captures planner/builder/evaluator prompts, artifact examples, `/context` inspection points, and stop conditions
+- Next action: Scope P5 Phase 2 around richer evaluator packs and round-level reporting
+
+### 2026-03-27
+
+- Change: Landed the P5 Phase 2 planning docs and backlog.
+- Evidence:
+  - New execution backlog at `docs/exec-plans/role-scoped-build-loop-phase-2-backlog.md`
+  - `docs/exec-plans/role-scoped-build-loop.md` now explains the transition from Phase 1 to Phase 2
+  - `docs/concepts/docs-index.md`, `docs/zh-CN/concepts/docs-index.md`, and `docs/exec-plans/README.md` now point to the Phase 2 backlog
+  - The new issue order now scopes build-round summaries, build-run `/context` reporting, API/log evaluator packs, and blocking-finding contracts before loop-runner automation
+- Next action: Implement P5 Phase 2 issue 1 for round-aware build/eval artifact summaries
+
+### 2026-03-27
+
+- Change: Landed P5 Phase 2 issue 1 by making `build-report.json` and `eval-report.json` round-aware artifacts with archived per-round snapshots.
+- Evidence:
+  - `src/agents/build-runs.ts` now adds stable round metadata (`round`, `role`, `generated_at`, `session_key`, `parent_round`) plus latest-round summary helpers and archived `round-XXXX.*.json` snapshots under each build run
+  - `src/agents/build-runs.test.ts` now covers multi-round storage, latest-round resolution, and backward-compatible loading of legacy single-round canonical artifacts
+  - `docs/exec-plans/role-scoped-build-loop.md`, `docs/concepts/role-scoped-build-walkthrough.md`, and `docs/zh-CN/concepts/role-scoped-build-walkthrough.md` now show the new artifact shape
+  - Focused tests passed across build-run artifacts, verify-pack execution, and verify report handling
+- Next action: Implement P5 Phase 2 issue 2 for build-run round reporting in `/context`
+
+### 2026-03-27
+
+- Change: Completed the remaining P5 Phase 2 issues by surfacing active build-run state in `/context`, adding richer evaluator packs, strengthening blocking-finding contracts, and extending the manual walkthrough to multi-round operation.
+- Evidence:
+  - `src/auto-reply/reply/commands-context-report.ts` and `src/auto-reply/reply/commands-context-report.test.ts` now render active build-run id/root, latest builder/evaluator rounds, top blocking findings, retry advice, and recommended next role in `/context list/detail/json`
+  - `src/agents/verify-pack.ts`, `src/agents/verify-pack.test.ts`, and `src/config/sessions/types.ts` now support `api`, `log-file`, `artifact-text`, and `artifact-json` evaluator checks with structured response/file evidence
+  - `src/agents/build-runs.ts` and `src/agents/build-runs.test.ts` now normalize structured `blocking_findings` in `eval-report.json` while remaining backward compatible with legacy string findings
+  - `docs/concepts/role-scoped-build-walkthrough.md` and `docs/zh-CN/concepts/role-scoped-build-walkthrough.md` now document multi-round builder/evaluator operation with Phase 2 artifact examples
+  - Focused tests, `pnpm check`, and `pnpm build` passed
+- Next action: Gather real multi-round usage feedback before defining any P5 Phase 3 automation

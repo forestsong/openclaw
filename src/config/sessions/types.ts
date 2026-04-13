@@ -359,9 +359,25 @@ export type SessionSkillSnapshot = {
   version?: number;
 };
 
+export type SessionVerifyEntryKind =
+  | "test"
+  | "build"
+  | "lint"
+  | "check"
+  | "command"
+  | "browser"
+  | "api"
+  | "logs"
+  | "log-file"
+  | "report"
+  | "artifact-text"
+  | "artifact-json";
+
+export type SessionVerifyEntrySource = "tool-result" | "verify-pack";
+
 export type SessionVerifyReport = {
   status: "passed" | "failed" | "skipped";
-  strategy: "command-tool";
+  strategy: "command-tool" | "artifact-pack" | "hybrid";
   generatedAt: number;
   checksRun: number;
   checksPassed: number;
@@ -371,10 +387,18 @@ export type SessionVerifyReport = {
     toolName: string;
     meta?: string;
     command: string;
-    kind: "test" | "build" | "lint" | "check" | "command";
+    checkId?: string;
+    kind: SessionVerifyEntryKind;
     status: "passed" | "failed";
     exitCode: number | null;
-    source: "tool-result";
+    source: SessionVerifyEntrySource;
+    message?: string;
+    evidence?: Array<{
+      kind: "screenshot" | "snapshot" | "response" | "file";
+      path?: string;
+      url?: string;
+      detail?: string;
+    }>;
   }>;
 };
 

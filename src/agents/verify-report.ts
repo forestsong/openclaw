@@ -1,5 +1,16 @@
-import type { SessionVerifyReport } from "../config/sessions/types.js";
+import type { SessionVerifyEntryKind, SessionVerifyReport } from "../config/sessions/types.js";
 import type { ExecToolDetails } from "./bash-tools.exec-types.js";
+
+export type VerifyObservation = {
+  toolName: string;
+  meta?: string;
+  command: string;
+  kind: SessionVerifyEntryKind;
+  status: "passed" | "failed";
+  exitCode: number | null;
+  source: "tool-result";
+  output?: string;
+};
 
 function readCommand(args: unknown): string | undefined {
   if (!args || typeof args !== "object") {
@@ -37,10 +48,10 @@ function readExecToolDetails(result: unknown): ExecToolDetails | null {
   return candidate as unknown as ExecToolDetails;
 }
 
-function detectVerifyKind(command: string): SessionVerifyReport["entries"][number]["kind"] | null {
+function detectVerifyKind(command: string): SessionVerifyEntryKind {
   const normalized = command.trim().toLowerCase();
   if (!normalized) {
-    return null;
+    return "command";
   }
   if (
     /\b(vitest|jest|pytest|phpunit|rspec)\b/.test(normalized) ||
@@ -74,16 +85,16 @@ function detectVerifyKind(command: string): SessionVerifyReport["entries"][numbe
   ) {
     return "build";
   }
-  return null;
+  return "command";
 }
 
-export function buildVerifyEntryFromToolResult(params: {
+export function buildVerifyObservationFromToolResult(params: {
   toolName: string;
   meta?: string;
   args: unknown;
   result: unknown;
   isToolError: boolean;
-}): SessionVerifyReport["entries"][number] | undefined {
+}): VerifyObservation | undefined {
   const normalizedToolName = params.toolName.trim().toLowerCase();
   if (normalizedToolName !== "exec" && normalizedToolName !== "bash") {
     return undefined;
@@ -91,11 +102,6 @@ export function buildVerifyEntryFromToolResult(params: {
 
   const command = readCommand(params.args);
   if (!command) {
-    return undefined;
-  }
-
-  const kind = detectVerifyKind(command);
-  if (!kind) {
     return undefined;
   }
 
@@ -114,36 +120,67 @@ export function buildVerifyEntryFromToolResult(params: {
     toolName: params.toolName,
     meta: params.meta,
     command,
-    kind,
+    kind: detectVerifyKind(command),
     status,
     exitCode,
     source: "tool-result",
+    output:
+      typeof details.aggregated === "string" && details.aggregated.trim()
+        ? details.aggregated
+        : undefined,
+  };
+}
+
+export function buildVerifyEntryFromObservation(
+  observation: VerifyObservation,
+): SessionVerifyReport["entries"][number] | undefined {
+  if (observation.kind === "command") {
+    return undefined;
+  }
+  return {
+    toolName: observation.toolName,
+    ...(observation.meta ? { meta: observation.meta } : {}),
+    command: observation.command,
+    kind: observation.kind,
+    status: observation.status,
+    exitCode: observation.exitCode,
+    source: observation.source,
   };
 }
 
 export function buildVerifyReport(params: {
   generatedAt: number;
   entries: SessionVerifyReport["entries"];
+  reason?: string;
 }): SessionVerifyReport {
   const entries = params.entries.map((entry) => ({ ...entry }));
   const checksRun = entries.length;
   const checksPassed = entries.filter((entry) => entry.status === "passed").length;
   const checksFailed = checksRun - checksPassed;
+  const sourceSet = new Set(entries.map((entry) => entry.source));
+  const strategy: SessionVerifyReport["strategy"] =
+    sourceSet.size === 0
+      ? "command-tool"
+      : sourceSet.size === 1
+        ? sourceSet.has("verify-pack")
+          ? "artifact-pack"
+          : "command-tool"
+        : "hybrid";
   if (checksRun === 0) {
     return {
       status: "skipped",
-      strategy: "command-tool",
+      strategy,
       generatedAt: params.generatedAt,
       checksRun: 0,
       checksPassed: 0,
       checksFailed: 0,
-      reason: "no verification commands detected",
+      reason: params.reason ?? "no verification commands detected",
       entries: [],
     };
   }
   return {
     status: checksFailed > 0 ? "failed" : "passed",
-    strategy: "command-tool",
+    strategy,
     generatedAt: params.generatedAt,
     checksRun,
     checksPassed,

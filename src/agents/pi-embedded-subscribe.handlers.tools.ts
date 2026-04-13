@@ -25,7 +25,10 @@ import { inferToolMetaFromArgs } from "./pi-embedded-utils.js";
 import { consumeAdjustedParamsForToolCall } from "./pi-tools.before-tool-call.js";
 import { buildToolMutationState, isSameToolMutationAction } from "./tool-mutation.js";
 import { normalizeToolName } from "./tool-policy.js";
-import { buildVerifyEntryFromToolResult } from "./verify-report.js";
+import {
+  buildVerifyEntryFromObservation,
+  buildVerifyObservationFromToolResult,
+} from "./verify-report.js";
 
 type ToolStartRecord = {
   startTime: number;
@@ -550,15 +553,19 @@ export async function handleToolExecutionEnd(
     ctx.state.successfulCronAdds += 1;
   }
 
-  const verifyEntry = buildVerifyEntryFromToolResult({
+  const verifyObservation = buildVerifyObservationFromToolResult({
     toolName,
     meta,
     args: afterToolCallArgs,
     result,
     isToolError,
   });
-  if (verifyEntry) {
-    ctx.state.verifyEntries.push(verifyEntry);
+  if (verifyObservation) {
+    ctx.state.verifyObservations.push(verifyObservation);
+    const verifyEntry = buildVerifyEntryFromObservation(verifyObservation);
+    if (verifyEntry) {
+      ctx.state.verifyEntries.push(verifyEntry);
+    }
   }
 
   emitAgentEvent({

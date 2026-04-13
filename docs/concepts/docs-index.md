@@ -20,6 +20,7 @@ This page is the shortest path to the repo knowledge OpenClaw expects humans and
 - [System Prompt](/concepts/system-prompt)
 - [Context](/concepts/context)
 - [Harness Roadmap](/concepts/harness-roadmap)
+- [Role-scoped build walkthrough](/concepts/role-scoped-build-walkthrough)
 
 ## Harness governance
 
@@ -34,6 +35,7 @@ This page is the shortest path to the repo knowledge OpenClaw expects humans and
 - [Harness agent-first system plan](/exec-plans/harness-agent-first-system)
 - [Role-scoped build loop](/exec-plans/role-scoped-build-loop)
 - [Role-scoped build loop Phase 1 backlog](/exec-plans/role-scoped-build-loop-phase-1-backlog)
+- [Role-scoped build loop Phase 2 backlog](/exec-plans/role-scoped-build-loop-phase-2-backlog)
 
 ## Tech debt
 

@@ -25,6 +25,8 @@ The target shape is inspired by Anthropic's `planner -> generator -> evaluator` 
 See also:
 
 - [Role-Scoped Build Loop Phase 1 Backlog](/exec-plans/role-scoped-build-loop-phase-1-backlog)
+- [Role-Scoped Build Loop Phase 2 Backlog](/exec-plans/role-scoped-build-loop-phase-2-backlog)
+- [Role-scoped build walkthrough](/concepts/role-scoped-build-walkthrough)
 
 ## Why this plan exists
 
@@ -253,6 +255,9 @@ Suggested shape:
 ```json
 {
   "round": 1,
+  "role": "builder",
+  "generated_at": 1760000000000,
+  "session_key": "builder:dashboard-v1:round-1",
   "summary": "What was implemented",
   "commands_run": ["pnpm test", "pnpm dev"],
   "files_changed": ["src/app.tsx", "src/api/server.ts"],
@@ -266,19 +271,17 @@ Suggested shape:
 
 ```json
 {
-  "status": "fail",
   "round": 1,
+  "role": "evaluator",
+  "generated_at": 1760000005000,
+  "session_key": "evaluator:dashboard-v1:round-1",
+  "parent_round": 1,
+  "status": "failed",
   "checks_run": 5,
   "checks_passed": 3,
-  "blocking_findings": [
-    {
-      "id": "save-flow-broken",
-      "kind": "browser",
-      "summary": "Save button is visible but does not persist changes",
-      "failure_category": "verification"
-    }
-  ],
-  "next_action": "builder_retry"
+  "checks_failed": 2,
+  "blocking_findings": ["save-flow-broken"],
+  "retry_advice": ["Builder should restore the save flow before another evaluator pass"]
 }
 ```
 
@@ -305,6 +308,30 @@ Suggested shape:
 Do not create a second verification system, second retry model, or second failure taxonomy just for the build loop.
 
 The build recipe should write into the existing harness reporting model wherever possible.
+
+## Phase progression
+
+### Phase 1
+
+Phase 1 establishes the minimum viable role loop:
+
+- role presets
+- build-run artifacts
+- role-aware spawn defaults
+- `verify-pack.json`
+- a first browser-backed evaluator slice
+- a manual operating walkthrough
+
+### Phase 2
+
+Phase 2 turns that first loop into a round-aware evaluator workflow:
+
+- richer evaluator packs beyond browser + exec
+- build/eval round summaries
+- stable blocking-finding contracts
+- `/context` visibility into the active build run
+
+See [Role-Scoped Build Loop Phase 2 Backlog](/exec-plans/role-scoped-build-loop-phase-2-backlog).
 
 ## Role presets
 

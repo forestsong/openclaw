@@ -1,6 +1,27 @@
-import { describe, expect, it } from "vitest";
+import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import { afterEach, describe, expect, it } from "vitest";
+import { writeBuildRunArtifact } from "../../agents/build-runs.js";
 import { buildContextReply } from "./commands-context-report.js";
 import type { HandleCommandsParams } from "./commands-types.js";
+
+const tempDirs: string[] = [];
+
+async function makeTempDir(prefix: string) {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), prefix));
+  tempDirs.push(dir);
+  return dir;
+}
+
+afterEach(async () => {
+  while (tempDirs.length > 0) {
+    const dir = tempDirs.pop();
+    if (dir) {
+      await fs.rm(dir, { recursive: true, force: true });
+    }
+  }
+});
 
 function makeParams(
   commandBodyNormalized: string,
@@ -83,6 +104,12 @@ function makeParams(
             status: "failed",
             exitCode: 1,
             source: "tool-result",
+            evidence: [
+              {
+                kind: "screenshot",
+                path: "/tmp/build-evidence.png",
+              },
+            ],
           },
         ],
       },
@@ -455,7 +482,9 @@ describe("buildContextReply", () => {
     expect(result.text).toContain("Policy slicing:");
     expect(result.text).toContain("- HEARTBEAT.md: sliced 543 chars");
     expect(result.text).toContain("Verify checks:");
-    expect(result.text).toContain("- build: failed | exit=1 | npm run build");
+    expect(result.text).toContain(
+      "- build: failed | exit=1 | npm run build | evidence=screenshot:/tmp/build-evidence.png",
+    );
     expect(result.text).toContain("Failure details:");
     expect(result.text).toContain("- source=verify-runner");
     expect(result.text).toContain("Retry entries:");
@@ -487,5 +516,120 @@ describe("buildContextReply", () => {
     );
     expect(result.text).toContain("Highlights:");
     expect(result.text).toContain("Largest prompt component: workspace files (10,000 chars");
+  });
+
+  it("shows build-run round summaries and blocking findings in detail/json output", async () => {
+    const repoRoot = await makeTempDir("openclaw-context-build-run-");
+    await fs.mkdir(path.join(repoRoot, ".git"), { recursive: true });
+    const workspaceDir = path.join(repoRoot, "workspace");
+    await fs.mkdir(workspaceDir, { recursive: true });
+
+    await writeBuildRunArtifact({
+      workspaceDir,
+      runId: "run-42",
+      artifactName: "build-report",
+      value: {
+        round: 1,
+        role: "builder",
+        generated_at: 1_001,
+        session_key: "builder:r1",
+        summary: "Initial dashboard shell",
+        commands_run: ["pnpm test"],
+        files_changed: ["src/app.tsx"],
+        known_gaps: ["CTA still hidden"],
+      },
+    });
+    await writeBuildRunArtifact({
+      workspaceDir,
+      runId: "run-42",
+      artifactName: "eval-report",
+      value: {
+        round: 1,
+        role: "evaluator",
+        generated_at: 1_010,
+        session_key: "evaluator:r1",
+        parent_round: 1,
+        status: "failed",
+        summary: "CTA missing on dashboard",
+        checks_run: 3,
+        checks_passed: 2,
+        checks_failed: 1,
+        blocking_findings: [
+          {
+            id: "cta-missing",
+            kind: "browser",
+            summary: "Primary CTA is still missing",
+            severity: "high",
+            category: "verification",
+            evidence_refs: ["screenshot:/tmp/cta-missing.png"],
+          },
+        ],
+        retry_advice: ["Builder should restore the primary CTA before another evaluator round"],
+        recommended_next_role: "builder",
+      },
+    });
+    await writeBuildRunArtifact({
+      workspaceDir,
+      runId: "run-42",
+      artifactName: "build-report",
+      value: {
+        round: 2,
+        role: "builder",
+        generated_at: 2_001,
+        session_key: "builder:r2",
+        parent_round: 1,
+        summary: "CTA render path updated",
+        commands_run: ["pnpm test", "pnpm build"],
+        files_changed: ["src/app.tsx", "src/components/cta.tsx"],
+        known_gaps: [],
+      },
+    });
+
+    const params = makeParams("/context detail", false);
+    params.workspaceDir = workspaceDir;
+    if (params.sessionEntry?.systemPromptReport) {
+      params.sessionEntry.systemPromptReport.workspaceDir = workspaceDir;
+      if (params.sessionEntry.systemPromptReport.delegationProfile) {
+        params.sessionEntry.systemPromptReport.delegationProfile.workspaceDir = workspaceDir;
+        params.sessionEntry.systemPromptReport.delegationProfile.buildRunDir = path.join(
+          repoRoot,
+          ".openclaw",
+          "build-runs",
+          "run-42",
+        );
+      }
+    }
+
+    const detail = await buildContextReply(params);
+    expect(detail.text).toContain("Build run: run-42 | latest=2 | builder=2 | evaluator=1 failed");
+    expect(detail.text).toContain("Build run:");
+    expect(detail.text).toContain("- latestRound=2");
+    expect(detail.text).toContain("- latestBuildRound=2");
+    expect(detail.text).toContain("- latestEvalRound=1");
+    expect(detail.text).toContain("- latestEvalStatus=failed");
+    expect(detail.text).toContain("- recommendedNextRole=builder");
+    expect(detail.text).toContain(
+      "- finding=cta-missing | high | verification | Primary CTA is still missing | evidence=screenshot:/tmp/cta-missing.png",
+    );
+    expect(detail.text).toContain(
+      "- retry=Builder should restore the primary CTA before another evaluator round",
+    );
+
+    const jsonParams = makeParams("/context json", false);
+    jsonParams.workspaceDir = workspaceDir;
+    if (jsonParams.sessionEntry?.systemPromptReport?.delegationProfile) {
+      jsonParams.sessionEntry.systemPromptReport.workspaceDir = workspaceDir;
+      jsonParams.sessionEntry.systemPromptReport.delegationProfile.workspaceDir = workspaceDir;
+      jsonParams.sessionEntry.systemPromptReport.delegationProfile.buildRunDir = path.join(
+        repoRoot,
+        ".openclaw",
+        "build-runs",
+        "run-42",
+      );
+    }
+    const json = await buildContextReply(jsonParams);
+    expect(json.text).toContain('"buildRunSummary"');
+    expect(json.text).toContain('"latestRound": 2');
+    expect(json.text).toContain('"recommended_next_role": "builder"');
   });
 });

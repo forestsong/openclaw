@@ -37,6 +37,7 @@ function createTestContext(): {
       toolMetaById: new Map<string, ToolCallSummary>(),
       toolMetas: [],
       verifyEntries: [],
+      verifyObservations: [],
       toolSummaryById: new Set<string>(),
       pendingMessagingTargets: new Map<string, MessagingToolSend>(),
       pendingMessagingTexts: new Map<string, string>(),
@@ -278,6 +279,13 @@ describe("handleToolExecutionEnd verify tracking", () => {
         source: "tool-result",
       }),
     ]);
+    expect(ctx.state.verifyObservations).toEqual([
+      expect.objectContaining({
+        kind: "test",
+        status: "passed",
+        output: "ok",
+      }),
+    ]);
   });
 
   it("records a failed verify check for failed build commands", async () => {
@@ -317,6 +325,13 @@ describe("handleToolExecutionEnd verify tracking", () => {
         exitCode: 1,
         command: "npm run build",
         source: "tool-result",
+      }),
+    ]);
+    expect(ctx.state.verifyObservations).toEqual([
+      expect.objectContaining({
+        kind: "build",
+        status: "failed",
+        output: "failed",
       }),
     ]);
   });

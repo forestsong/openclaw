@@ -18,6 +18,8 @@ This directory stores medium and long-running plans that should survive past cha
 - [Harness agent-first system plan](/exec-plans/harness-agent-first-system)
 - [Role-scoped build loop](/exec-plans/role-scoped-build-loop)
 - [Role-scoped build loop Phase 1 backlog](/exec-plans/role-scoped-build-loop-phase-1-backlog)
+- [Role-scoped build loop Phase 2 backlog](/exec-plans/role-scoped-build-loop-phase-2-backlog)
+- [Role-scoped build walkthrough](/concepts/role-scoped-build-walkthrough)
 
 ## What belongs here
 
